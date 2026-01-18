@@ -45,6 +45,7 @@ model Task {
   status           String         @default("TODO") // TODO, DONE, SKIPPED
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
+  order            Int            @default(0)
   pomodorosTotal   Int            @default(1)
   pomodorosCompleted Int          @default(0)
   focusSessions    FocusSession[]

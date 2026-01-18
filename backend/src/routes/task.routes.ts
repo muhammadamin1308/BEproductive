@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/auth.middleware';
-import { getTasks, createTask, updateTaskStatus, updateTaskProgress, updateTask, deleteTask } from '../controllers/task.controller';
+import { getTasks, createTask, updateTaskStatus, updateTaskProgress, updateTask, deleteTask, reorderTasks } from '../controllers/task.controller';
 
 const router = Router();
 
@@ -9,6 +9,7 @@ router.use(authenticateToken);
 
 router.get('/', getTasks);
 router.post('/', createTask);
+router.patch('/reorder', reorderTasks);
 router.patch('/:id/status', updateTaskStatus);
 router.patch('/:id/progress', updateTaskProgress);
 router.patch('/:id', updateTask);

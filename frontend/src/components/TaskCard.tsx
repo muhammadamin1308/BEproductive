@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { Play, Check, MoreVertical, Trash2, Edit2, X } from 'lucide-react';
+import { Play, Check, MoreVertical, Trash2, Edit2, X, GripVertical } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useFocusStore, Task } from '../store/useFocusStore';
 import { cn } from '../lib/utils';
 import { api } from '../lib/axios';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface TaskCardProps {
     task: {
@@ -28,6 +30,21 @@ export const TaskCard = ({ task }: TaskCardProps) => {
     const [editDesc, setEditDesc] = useState(task.description || '');
     const [editPomodorosTotal, setEditPomodorosTotal] = useState(task.pomodorosTotal);
     const menuRef = useRef<HTMLDivElement>(null);
+
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: task.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    };
 
     // Close menu when clicking outside
     useEffect(() => {
@@ -127,13 +144,26 @@ export const TaskCard = ({ task }: TaskCardProps) => {
     }
 
     return (
-        <div className={cn(
-            "group relative bg-surface p-5 rounded-2xl border transition-all duration-300",
-            isDone
-                ? "border-slate-100 dark:border-white/5 opacity-60 bg-slate-50 dark:bg-white/5"
-                : "border-slate-100 dark:border-white/10 shadow-soft hover:shadow-md hover:border-indigo-100 dark:hover:border-indigo-900/30"
-        )}>
+        <div
+            ref={setNodeRef}
+            style={style}
+            className={cn(
+                "group relative bg-surface p-5 rounded-2xl border transition-all duration-300",
+                isDone
+                    ? "border-slate-100 dark:border-white/5 opacity-60 bg-slate-50 dark:bg-white/5"
+                    : "border-slate-100 dark:border-white/10 shadow-soft hover:shadow-md hover:border-indigo-100 dark:hover:border-indigo-900/30"
+            )}
+        >
             <div className="flex items-start gap-4">
+                {/* Drag Handle */}
+                <button
+                    {...attributes}
+                    {...listeners}
+                    className="mt-1 p-1 text-secondary-text/40 hover:text-secondary-text cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                    <GripVertical className="w-4 h-4" />
+                </button>
+
                 {/* Custom Radio/Check */}
                 <button
                     className={cn(

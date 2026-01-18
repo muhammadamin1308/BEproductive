@@ -27,7 +27,7 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
         date: String(date),
       },
       orderBy: {
-        createdAt: 'asc', // Or priority if we implement that later
+        order: 'asc',
       },
     });
 
@@ -35,6 +35,32 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Get tasks error:', error);
     res.status(500).json({ error: 'Failed to fetch tasks' });
+  }
+};
+
+// PATCH /tasks/reorder
+export const reorderTasks = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const { taskIds } = req.body; // Array of IDs in new order
+
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!Array.isArray(taskIds)) return res.status(400).json({ error: 'Invalid taskIds' });
+
+    // Use transaction to update all orders
+    await prisma.$transaction(
+      taskIds.map((id: string, index: number) => 
+        prisma.task.updateMany({
+            where: { id, userId }, // Ensure user owns the task
+            data: { order: index }
+        })
+      )
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Reorder error:', error);
+    res.status(500).json({ error: 'Failed to reorder tasks' });
   }
 };
 

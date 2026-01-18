@@ -7,6 +7,8 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useFocusStore } from '../store/useFocusStore';
 import { format } from 'date-fns';
 import { api } from '../lib/axios';
+import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 
 const getTodayDate = () => new Date().toISOString().split('T')[0];
 
@@ -32,14 +34,20 @@ export const TodayPage = () => {
             await api.post('/tasks', {
                 title,
                 date: todayDate,
-                description: '', // Empty description initially
+                description: '',
                 pomodorosTotal: pomodorosTotal,
             });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks', todayDate] });
             setNewTaskTitle('');
-            setPomodoros(2); // Reset to default
+            setPomodoros(2);
+        },
+    });
+
+    const reorderMutation = useMutation({
+        mutationFn: async (taskIds: string[]) => {
+            await api.patch('/tasks/reorder', { taskIds });
         },
     });
 
@@ -47,6 +55,22 @@ export const TodayPage = () => {
         e.preventDefault();
         if (!newTaskTitle.trim()) return;
         createTaskMutation.mutate({ title: newTaskTitle, pomodorosTotal: pomodoros });
+    };
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+
+        const oldIndex = tasks.findIndex((t: any) => t.id === active.id);
+        const newIndex = tasks.findIndex((t: any) => t.id === over.id);
+
+        const reorderedTasks = arrayMove(tasks, oldIndex, newIndex);
+
+        // Optimistic update
+        queryClient.setQueryData(['tasks', todayDate], reorderedTasks);
+
+        // Persist to backend
+        reorderMutation.mutate(reorderedTasks.map((t: any) => t.id));
     };
 
     if (isLoading) return <div className="p-10 text-center text-secondary-text">Loading today's plan...</div>;
@@ -69,52 +93,56 @@ export const TodayPage = () => {
                 </header>
 
                 {/* Task List */}
-                <div className="space-y-4 mb-8">
-                    {tasks?.map((task: any) => (
-                        <TaskCard key={task.id} task={task} />
-                    ))}
+                <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                    <SortableContext items={tasks?.map((t: any) => t.id) || []} strategy={verticalListSortingStrategy}>
+                        <div className="space-y-4 mb-8">
+                            {tasks?.map((task: any) => (
+                                <TaskCard key={task.id} task={task} />
+                            ))}
 
-                    {/* Add Task Button / Input */}
-                    <form onSubmit={handleAddTask} className="w-full">
-                        <div className="bg-surface rounded-2xl border border-secondary-accent p-4 shadow-soft">
-                            <input
-                                type="text"
-                                value={newTaskTitle}
-                                onChange={(e) => setNewTaskTitle(e.target.value)}
-                                placeholder="Task title..."
-                                className="w-full bg-transparent text-lg font-medium text-primary-text placeholder:text-secondary-text/60 outline-none mb-4"
-                                autoFocus
-                            />
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <label className="text-xs font-bold text-secondary-text uppercase tracking-wider">Est. Pomodoros:</label>
-                                    <div className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 rounded-lg p-1">
-                                        {[1, 2, 3, 4, 6, 8].map((num) => (
-                                            <button
-                                                key={num}
-                                                type="button"
-                                                onClick={() => setPomodoros(num)}
-                                                className={`w-8 h-8 rounded-md text-sm font-bold transition-all ${pomodoros === num ? 'bg-cta text-white shadow-sm' : 'text-secondary-text hover:bg-white/50 dark:hover:bg-white/10'}`}
-                                            >
-                                                {num}
-                                            </button>
-                                        ))}
+                            {/* Add Task Button / Input */}
+                            <form onSubmit={handleAddTask} className="w-full">
+                                <div className="bg-surface rounded-2xl border border-secondary-accent p-4 shadow-soft">
+                                    <input
+                                        type="text"
+                                        value={newTaskTitle}
+                                        onChange={(e) => setNewTaskTitle(e.target.value)}
+                                        placeholder="Task title..."
+                                        className="w-full bg-transparent text-lg font-medium text-primary-text placeholder:text-secondary-text/60 outline-none mb-4"
+                                        autoFocus
+                                    />
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <label className="text-xs font-bold text-secondary-text uppercase tracking-wider">Est. Pomodoros:</label>
+                                            <div className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 rounded-lg p-1">
+                                                {[1, 2, 3, 4, 6, 8].map((num) => (
+                                                    <button
+                                                        key={num}
+                                                        type="button"
+                                                        onClick={() => setPomodoros(num)}
+                                                        className={`w-8 h-8 rounded-md text-sm font-bold transition-all ${pomodoros === num ? 'bg-cta text-white shadow-sm' : 'text-secondary-text hover:bg-white/50 dark:hover:bg-white/10'}`}
+                                                    >
+                                                        {num}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="submit"
+                                            className="bg-cta text-white w-10 h-10 rounded-xl flex items-center justify-center hover:brightness-110 transition-all shadow-md active:scale-95 disabled:opacity-50"
+                                            disabled={!newTaskTitle.trim()}
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                    <div className="mt-2 text-xs text-secondary-text text-right">
+                                        Total: {pomodoros * 25} min + breaks
                                     </div>
                                 </div>
-                                <button
-                                    type="submit"
-                                    className="bg-cta text-white w-10 h-10 rounded-xl flex items-center justify-center hover:brightness-110 transition-all shadow-md active:scale-95 disabled:opacity-50"
-                                    disabled={!newTaskTitle.trim()}
-                                >
-                                    +
-                                </button>
-                            </div>
-                            <div className="mt-2 text-xs text-secondary-text text-right">
-                                Total: {pomodoros * 25} min + breaks
-                            </div>
+                            </form>
                         </div>
-                    </form>
-                </div>
+                    </SortableContext>
+                </DndContext>
 
                 {/* Global CTA - Start Focus Session */}
                 <div className="fixed bottom-24 left-0 right-0 md:static md:mt-12 px-6 flex justify-center pointer-events-none">
