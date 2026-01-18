@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import authRoutes from './routes/auth.routes';
 import taskRoutes from './routes/task.routes';
+import goalRoutes from './routes/goal.routes';
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ app.use(cookieParser());
 
 app.use('/auth', authRoutes);
 app.use('/tasks', taskRoutes);
+app.use('/goals', goalRoutes);
 
 app.get('/health', (req, res) => {
   res.send('OK');

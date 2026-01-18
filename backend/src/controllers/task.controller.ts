@@ -68,7 +68,7 @@ export const reorderTasks = async (req: AuthRequest, res: Response) => {
 export const createTask = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    const { title, date, pomodorosTotal } = req.body;
+    const { title, date, pomodorosTotal, startTime, endTime } = req.body;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -83,6 +83,8 @@ export const createTask = async (req: AuthRequest, res: Response) => {
         userId,
         title,
         date,
+        startTime,
+        endTime,
         status: 'TODO',
         pomodorosTotal: pomodorosTotal || 1, // Default to 1 if not provided
       },
@@ -152,7 +154,7 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
     const { id } = req.params;
-    const { title, description, pomodorosTotal } = req.body;
+    const { title, description, pomodorosTotal, startTime, endTime, date } = req.body;
 
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
@@ -161,7 +163,10 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
       data: { 
         title, 
         description, 
-        pomodorosTotal 
+        pomodorosTotal,
+        startTime,
+        endTime,
+        date
       },
     });
 
