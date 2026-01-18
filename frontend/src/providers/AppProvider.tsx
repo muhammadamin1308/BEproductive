@@ -4,6 +4,8 @@ import React, { useEffect } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { api } from '../lib/axios';
 
+import { FocusTimerManager } from '../components/FocusTimerManager';
+
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
@@ -37,6 +39,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     return (
         <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}>
             <QueryClientProvider client={queryClient}>
+                <FocusTimerManager />
                 {children}
             </QueryClientProvider>
         </GoogleOAuthProvider>

@@ -13,18 +13,8 @@ export const FocusPage = () => {
         tick
     } = useFocusStore();
 
-    useEffect(() => {
-        let interval: ReturnType<typeof setInterval>;
-        if (isActive && timeLeft > 0) {
-            interval = setInterval(() => {
-                tick();
-            }, 1000);
-        } else if (timeLeft === 0) {
-            // Timer finished
-            // In a real app we'd play a sound here
-        }
-        return () => clearInterval(interval);
-    }, [isActive, timeLeft, tick]);
+    // Timer is now managed globally by FocusTimerManager
+    // We just display the state here
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
