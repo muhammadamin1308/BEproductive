@@ -49,11 +49,15 @@ export const CalendarPage = () => {
   const [view, setView] = useState<View>(Views.WEEK);
   const [date, setDate] = useState(new Date());
   const [showModal, setShowModal] = useState(false);
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [editingRecurringTaskId, setEditingRecurringTaskId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     date: format(new Date(), 'yyyy-MM-dd'),
     startTime: '09:00',
     endTime: '10:00',
+    recurrencePattern: 'NONE',
+    daysOfWeek: [] as number[],
   });
 
   useEffect(() => {
@@ -113,11 +117,48 @@ export const CalendarPage = () => {
     const endTime = format(slotInfo.end, 'HH:mm');
     const dateStr = format(slotInfo.start, 'yyyy-MM-dd');
 
+    setEditingEventId(null);
     setFormData({
       title: '',
       date: dateStr,
       startTime,
       endTime,
+      recurrencePattern: 'NONE',
+      daysOfWeek: [],
+    });
+    setShowModal(true);
+  }, []);
+
+  const handleSelectEvent = useCallback(async (event: CalendarEvent) => {
+    const startTime = format(event.start, 'HH:mm');
+    const endTime = format(event.end, 'HH:mm');
+    const dateStr = format(event.start, 'yyyy-MM-dd');
+
+    setEditingEventId(event.id);
+    
+    // Fetch task details to check if it's part of a recurring series
+    try {
+      const response = await api.get(`/tasks/${event.id}`);
+      const task = response.data;
+      
+      // Check if this task is part of a recurring series
+      if (task.recurringTaskId) {
+        setEditingRecurringTaskId(task.recurringTaskId);
+      } else {
+        setEditingRecurringTaskId(null);
+      }
+    } catch (error) {
+      console.error('Failed to fetch task details:', error);
+      setEditingRecurringTaskId(null);
+    }
+    
+    setFormData({
+      title: event.title,
+      date: dateStr,
+      startTime,
+      endTime,
+      recurrencePattern: 'NONE',
+      daysOfWeek: [],
     });
     setShowModal(true);
   }, []);
@@ -169,20 +210,120 @@ export const CalendarPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post('/tasks', {
-        ...formData,
-        pomodorosTotal: 1,
-      });
+      if (editingEventId) {
+        // Update existing task
+        await api.patch(`/tasks/${editingEventId}`, {
+          title: formData.title,
+          date: formData.date,
+          startTime: formData.startTime,
+          endTime: formData.endTime,
+        });
+      } else if (formData.recurrencePattern !== 'NONE') {
+        // Create recurring task
+        await api.post('/recurring-tasks', {
+          title: formData.title,
+          recurrencePattern: formData.recurrencePattern,
+          daysOfWeek: formData.recurrencePattern === 'CUSTOM' 
+            ? JSON.stringify(formData.daysOfWeek) 
+            : null,
+          startTime: formData.startTime,
+          endTime: formData.endTime,
+          pomodorosTotal: 1,
+          priority: 1,
+        });
+      } else {
+        // Create one-time task
+        await api.post('/tasks', {
+          ...formData,
+          pomodorosTotal: 1,
+        });
+      }
       setShowModal(false);
+      setEditingEventId(null);
       setFormData({
         title: '',
         date: format(new Date(), 'yyyy-MM-dd'),
         startTime: '09:00',
         endTime: '10:00',
+        recurrencePattern: 'NONE',
+        daysOfWeek: [],
       });
       fetchTasks();
     } catch (error) {
-      console.error('Error creating task:', error);
+      console.error('Error saving task:', error);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!editingEventId) return;
+    
+    try {
+      await api.delete(`/tasks/${editingEventId}`);
+      setShowModal(false);
+      setEditingEventId(null);
+      setEditingRecurringTaskId(null);
+      setFormData({
+        title: '',
+        date: format(new Date(), 'yyyy-MM-dd'),
+        startTime: '09:00',
+        endTime: '10:00',
+        recurrencePattern: 'NONE',
+        daysOfWeek: [],
+      });
+      fetchTasks();
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
+  };
+
+  const handleDeleteSeries = async () => {
+    if (!editingRecurringTaskId) return;
+    
+    try {
+      // Deleting the recurring task will cascade delete all linked task instances
+      await api.delete(`/recurring-tasks/${editingRecurringTaskId}`);
+      setShowModal(false);
+      setEditingEventId(null);
+      setEditingRecurringTaskId(null);
+      setFormData({
+        title: '',
+        date: format(new Date(), 'yyyy-MM-dd'),
+        startTime: '09:00',
+        endTime: '10:00',
+        recurrencePattern: 'NONE',
+        daysOfWeek: [],
+      });
+      fetchTasks();
+    } catch (error) {
+      console.error('Error deleting recurring task series:', error);
+    }
+  };
+
+  const handleUpdateSeries = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingRecurringTaskId) return;
+    
+    try {
+      // Update the recurring task, which affects all future occurrences
+      await api.patch(`/recurring-tasks/${editingRecurringTaskId}`, {
+        title: formData.title,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+      });
+      setShowModal(false);
+      setEditingEventId(null);
+      setEditingRecurringTaskId(null);
+      setFormData({
+        title: '',
+        date: format(new Date(), 'yyyy-MM-dd'),
+        startTime: '09:00',
+        endTime: '10:00',
+        recurrencePattern: 'NONE',
+        daysOfWeek: [],
+      });
+      fetchTasks();
+    } catch (error) {
+      console.error('Error updating recurring task series:', error);
     }
   };
 
@@ -192,11 +333,14 @@ export const CalendarPage = () => {
         <h1 className="text-2xl font-bold text-primary-text">Schedule</h1>
         <button
           onClick={() => {
+            setEditingEventId(null);
             setFormData({
               title: '',
               date: format(new Date(), 'yyyy-MM-dd'),
               startTime: '09:00',
               endTime: '10:00',
+              recurrencePattern: 'NONE',
+              daysOfWeek: [],
             });
             setShowModal(true);
           }}
@@ -220,6 +364,7 @@ export const CalendarPage = () => {
           selectable
           resizable
           onSelectSlot={handleSelectSlot}
+          onSelectEvent={handleSelectEvent}
           onEventDrop={handleEventDrop}
           onEventResize={handleEventResize}
           components={{
@@ -242,11 +387,13 @@ export const CalendarPage = () => {
         />
       </div>
 
-      {/* Modal for creating new events */}
+      {/* Modal for creating/editing events */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-surface rounded-2xl max-w-md w-full p-6 shadow-xl">
-            <h2 className="text-xl font-bold text-primary-text mb-4">New Event</h2>
+            <h2 className="text-xl font-bold text-primary-text mb-4">
+              {editingEventId ? 'Edit Event' : 'New Event'}
+            </h2>
             <form onSubmit={handleSubmit}>
               <div className="space-y-4">
                 <div>
@@ -257,7 +404,7 @@ export const CalendarPage = () => {
                     type="text"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3 py-2 bg-background border border-slate-200 dark:border-white/10 rounded-lg text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-primary-text placeholder:text-secondary-text focus:outline-none focus:ring-2 focus:ring-cta"
                     required
                   />
                 </div>
@@ -269,10 +416,61 @@ export const CalendarPage = () => {
                     type="date"
                     value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    className="w-full px-3 py-2 bg-background border border-slate-200 dark:border-white/10 rounded-lg text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
                     required
+                    disabled={formData.recurrencePattern !== 'NONE'}
                   />
                 </div>
+                
+                {/* Recurrence Pattern Dropdown */}
+                {!editingEventId && (
+                  <div>
+                    <label className="block text-sm font-medium text-primary-text mb-2">
+                      Repeat
+                    </label>
+                    <select
+                      value={formData.recurrencePattern}
+                      onChange={(e) => setFormData({ ...formData, recurrencePattern: e.target.value, daysOfWeek: [] })}
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
+                    >
+                      <option value="NONE">No repeat</option>
+                      <option value="DAILY">Every day</option>
+                      <option value="WEEKDAYS">Weekdays (Mon-Fri)</option>
+                      <option value="CUSTOM">Custom days</option>
+                    </select>
+                  </div>
+                )}
+                
+                {/* Custom Days Selection */}
+                {formData.recurrencePattern === 'CUSTOM' && !editingEventId && (
+                  <div>
+                    <label className="block text-sm font-medium text-primary-text mb-2">
+                      Select Days
+                    </label>
+                    <div className="flex gap-2 flex-wrap">
+                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            const daysOfWeek = formData.daysOfWeek.includes(idx)
+                              ? formData.daysOfWeek.filter(d => d !== idx)
+                              : [...formData.daysOfWeek, idx];
+                            setFormData({ ...formData, daysOfWeek });
+                          }}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                            formData.daysOfWeek.includes(idx)
+                              ? 'bg-cta text-white'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                          }`}
+                        >
+                          {day}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-primary-text mb-2">
@@ -282,7 +480,7 @@ export const CalendarPage = () => {
                       type="time"
                       value={formData.startTime}
                       onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                      className="w-full px-3 py-2 bg-background border border-slate-200 dark:border-white/10 rounded-lg text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
                       required
                     />
                   </div>
@@ -294,26 +492,83 @@ export const CalendarPage = () => {
                       type="time"
                       value={formData.endTime}
                       onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                      className="w-full px-3 py-2 bg-background border border-slate-200 dark:border-white/10 rounded-lg text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
                       required
                     />
                   </div>
                 </div>
               </div>
               <div className="flex gap-3 mt-6">
+                {editingEventId && !editingRecurringTaskId && (
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  >
+                    Delete
+                  </button>
+                )}
+                {editingEventId && editingRecurringTaskId && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleDelete}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      Delete This Occurrence
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDeleteSeries}
+                      className="px-4 py-2 bg-red-700 text-white rounded-lg hover:bg-red-800 transition-colors"
+                    >
+                      Delete All Occurrences
+                    </button>
+                  </>
+                )}
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+                    setShowModal(false);
+                    setEditingEventId(null);
+                    setEditingRecurringTaskId(null);
+                    setFormData({
+                      title: '',
+                      date: format(new Date(), 'yyyy-MM-dd'),
+                      startTime: '09:00',
+                      endTime: '10:00',
+                      recurrencePattern: 'NONE',
+                      daysOfWeek: [],
+                    });
+                  }}
                   className="flex-1 px-4 py-2 border border-slate-200 dark:border-white/10 rounded-lg text-primary-text hover:bg-background transition-colors"
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-cta text-white rounded-lg hover:opacity-90 transition-opacity"
-                >
-                  Create
-                </button>
+                {editingEventId && editingRecurringTaskId ? (
+                  <>
+                    <button
+                      type="submit"
+                      className="flex-1 px-4 py-2 bg-cta text-white rounded-lg hover:opacity-90 transition-opacity"
+                    >
+                      Update This Occurrence
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleUpdateSeries}
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Update All Occurrences
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-2 bg-cta text-white rounded-lg hover:opacity-90 transition-opacity"
+                  >
+                    {editingEventId ? 'Update' : 'Create'}
+                  </button>
+                )}
               </div>
             </form>
           </div>

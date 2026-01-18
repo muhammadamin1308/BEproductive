@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { shouldTaskAppearOnDate } from './recurring-task.controller';
 
 const prisma = new PrismaClient();
 
@@ -21,15 +22,55 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Date query parameter is required (YYYY-MM-DD)' });
     }
 
+    const dateStr = String(date);
+
+    // Get existing tasks for this date
     const tasks = await prisma.task.findMany({
       where: {
         userId,
-        date: String(date),
+        date: dateStr,
       },
       orderBy: {
         order: 'asc',
       },
     });
+
+    // Get active recurring tasks
+    const recurringTasks = await prisma.recurringTask.findMany({
+      where: {
+        userId,
+        isActive: true,
+      },
+    });
+
+    // Generate task instances for recurring tasks that should appear on this date
+    const existingTitles = new Set(tasks.map(t => t.title));
+    
+    for (const recurringTask of recurringTasks) {
+      if (shouldTaskAppearOnDate(recurringTask, dateStr)) {
+        // Check if a task with this title already exists for this date
+        // (to avoid duplicates if user manually created one)
+        if (!existingTitles.has(recurringTask.title)) {
+          const newTask = await prisma.task.create({
+            data: {
+              userId,
+              title: recurringTask.title,
+              description: recurringTask.description,
+              date: dateStr,
+              startTime: recurringTask.startTime,
+              endTime: recurringTask.endTime,
+              priority: recurringTask.priority,
+              pomodorosTotal: recurringTask.pomodorosTotal,
+              goalId: recurringTask.goalId,
+              recurringTaskId: recurringTask.id,
+              status: 'TODO',
+              order: tasks.length,
+            },
+          });
+          tasks.push(newTask);
+        }
+      }
+    }
 
     res.json(tasks);
   } catch (error) {
@@ -61,6 +102,37 @@ export const reorderTasks = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Reorder error:', error);
     res.status(500).json({ error: 'Failed to reorder tasks' });
+  }
+};
+
+// GET /tasks/:id
+export const getTask = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const { id } = req.params;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const task = await prisma.task.findFirst({
+      where: {
+        id: String(id),
+        userId,
+      },
+      include: {
+        recurringTask: true,
+      },
+    });
+
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    res.json(task);
+  } catch (error) {
+    console.error('Get task error:', error);
+    res.status(500).json({ error: 'Failed to fetch task' });
   }
 };
 

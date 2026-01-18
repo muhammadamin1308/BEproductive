@@ -17,6 +17,7 @@ model User {
   goals     Goal[]
   tasks     Task[]
   reflections Reflection[]
+  recurringTasks RecurringTask[]
 }
 
 model Goal {
@@ -30,6 +31,7 @@ model Goal {
   parentGoal   Goal?     @relation("GoalHierarchy", fields: [parentGoalId], references: [id])
   subGoals     Goal[]    @relation("GoalHierarchy")
   tasks        Task[]
+  recurringTasks RecurringTask[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 }
@@ -47,6 +49,8 @@ model Task {
   estimatedMinutes Int?
   goalId           String?
   goal             Goal?          @relation(fields: [goalId], references: [id])
+  recurringTaskId  String?
+  recurringTask    RecurringTask? @relation(fields: [recurringTaskId], references: [id], onDelete: Cascade)
   status           String         @default("TODO") // TODO, DONE, SKIPPED
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
@@ -79,4 +83,24 @@ model Reflection {
   updatedAt      DateTime @updatedAt
 
   @@unique([userId, weekStartDate])
+}
+
+model RecurringTask {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
+  title            String
+  description      String?
+  recurrencePattern String  // DAILY, WEEKDAYS, WEEKLY, CUSTOM
+  daysOfWeek       String?  // JSON array for CUSTOM: [0,1,2,3,4,5,6] where 0=Sunday
+  startTime        String?  // HH:mm format
+  endTime          String?  // HH:mm format
+  priority         Int      @default(1)
+  pomodorosTotal   Int      @default(1)
+  goalId           String?
+  goal             Goal?    @relation(fields: [goalId], references: [id])
+  isActive         Boolean  @default(true)
+  tasks            Task[]   // Link to generated task instances
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }

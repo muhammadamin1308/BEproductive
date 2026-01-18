@@ -1,7 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { FocusPage } from './pages/FocusPage';
 import { GoalsPage } from './pages/GoalsPage';
-import { CalendarPage } from './pages/CalendarPage';
 import { ReviewPage } from './pages/ReviewPage';
 import { TodayPage } from './pages/TodayPage';
 import { LoginPage } from './pages/LoginPage';
@@ -27,10 +26,6 @@ export const router = createBrowserRouter([
                     {
                         path: '/goals',
                         element: <GoalsPage />,
-                    },
-                    {
-                        path: '/calendar',
-                        element: <CalendarPage />,
                     },
                     {
                         path: '/review',

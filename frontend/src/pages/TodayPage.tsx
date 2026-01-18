@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Play } from 'lucide-react';
+import { Play, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TaskCard } from '../components/TaskCard';
 import { useAuthStore } from '../store/useAuthStore';
@@ -15,7 +15,11 @@ const getTodayDate = () => new Date().toISOString().split('T')[0];
 export const TodayPage = () => {
     const navigate = useNavigate();
     const [newTaskTitle, setNewTaskTitle] = useState('');
+    const [newTaskDescription, setNewTaskDescription] = useState('');
     const [pomodoros, setPomodoros] = useState(1);
+    const [showTimeFields, setShowTimeFields] = useState(false);
+    const [startTime, setStartTime] = useState('');
+    const [endTime, setEndTime] = useState('');
     const user = useAuthStore((state) => state.user);
     const queryClient = useQueryClient();
     const todayDate = getTodayDate();
@@ -30,18 +34,24 @@ export const TodayPage = () => {
     });
 
     const createTaskMutation = useMutation({
-        mutationFn: async ({ title, pomodorosTotal }: { title: string; pomodorosTotal: number }) => {
+        mutationFn: async ({ title, description, pomodorosTotal, startTime, endTime }: { title: string; description: string; pomodorosTotal: number; startTime?: string; endTime?: string }) => {
             await api.post('/tasks', {
                 title,
                 date: todayDate,
-                description: '',
+                description: description || '',
                 pomodorosTotal: pomodorosTotal,
+                startTime: startTime || null,
+                endTime: endTime || null,
             });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks', todayDate] });
             setNewTaskTitle('');
+            setNewTaskDescription('');
             setPomodoros(2);
+            setStartTime('');
+            setEndTime('');
+            setShowTimeFields(false);
         },
     });
 
@@ -54,7 +64,13 @@ export const TodayPage = () => {
     const handleAddTask = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newTaskTitle.trim()) return;
-        createTaskMutation.mutate({ title: newTaskTitle, pomodorosTotal: pomodoros });
+        createTaskMutation.mutate({ 
+            title: newTaskTitle,
+            description: newTaskDescription,
+            pomodorosTotal: pomodoros,
+            startTime: startTime || undefined,
+            endTime: endTime || undefined,
+        });
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
@@ -108,9 +124,62 @@ export const TodayPage = () => {
                                         value={newTaskTitle}
                                         onChange={(e) => setNewTaskTitle(e.target.value)}
                                         placeholder="Task title..."
-                                        className="w-full bg-transparent text-lg font-medium text-primary-text placeholder:text-secondary-text/60 outline-none mb-4"
+                                        className="w-full bg-slate-50 dark:bg-white/5 px-4 py-2.5 rounded-lg text-lg font-medium text-primary-text placeholder:text-secondary-text/60 outline-none mb-3 border border-slate-200 dark:border-white/10 focus:ring-2 focus:ring-cta"
                                         autoFocus
                                     />
+                                    
+                                    <textarea
+                                        value={newTaskDescription}
+                                        onChange={(e) => setNewTaskDescription(e.target.value)}
+                                        placeholder="Description (optional)..."
+                                        rows={2}
+                                        className="w-full bg-slate-50 dark:bg-white/5 px-4 py-2.5 rounded-lg text-sm text-primary-text placeholder:text-secondary-text/60 outline-none mb-4 resize-none border border-slate-200 dark:border-white/10 focus:ring-2 focus:ring-cta"
+                                    />
+                                    
+                                    {/* Time Fields (Toggleable) */}
+                                    {showTimeFields ? (
+                                        <div className="flex items-center gap-3 mb-4 bg-slate-50 dark:bg-white/5 p-3 rounded-lg">
+                                            <div className="flex-1">
+                                                <label className="block text-xs font-medium text-secondary-text mb-1.5">Start Time</label>
+                                                <input
+                                                    type="time"
+                                                    value={startTime}
+                                                    onChange={(e) => setStartTime(e.target.value)}
+                                                    className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-primary-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <label className="block text-xs font-medium text-secondary-text mb-1.5">End Time</label>
+                                                <input
+                                                    type="time"
+                                                    value={endTime}
+                                                    onChange={(e) => setEndTime(e.target.value)}
+                                                    className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-primary-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setShowTimeFields(false);
+                                                    setStartTime('');
+                                                    setEndTime('');
+                                                }}
+                                                className="mt-5 px-3 py-2 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowTimeFields(true)}
+                                            className="flex items-center gap-2 px-3 py-2 mb-4 text-sm text-secondary-text hover:text-primary-text bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+                                        >
+                                            <Clock className="w-4 h-4" />
+                                            Add time
+                                        </button>
+                                    )}
+
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <label className="text-xs font-bold text-secondary-text uppercase tracking-wider">Est. Pomodoros:</label>

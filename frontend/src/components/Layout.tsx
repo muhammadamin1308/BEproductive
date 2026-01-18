@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Target, Trophy, Calendar, ClipboardCheck, Moon, Sun, LogOut } from 'lucide-react';
+import { LayoutDashboard, Target, Trophy, ClipboardCheck, Repeat, Moon, Sun, LogOut } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuthStore } from '../store/useAuthStore';
 import { useThemeStore } from '../store/useThemeStore';
@@ -23,7 +23,6 @@ export const Layout = () => {
         { to: '/', icon: LayoutDashboard, label: 'Today' },
         { to: '/focus', icon: Target, label: 'Focus' },
         { to: '/goals', icon: Trophy, label: 'Goals' },
-        { to: '/calendar', icon: Calendar, label: 'Calendar' },
         { to: '/review', icon: ClipboardCheck, label: 'Review' },
     ];
 

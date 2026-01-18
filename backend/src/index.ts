@@ -7,6 +7,7 @@ import authRoutes from './routes/auth.routes';
 import taskRoutes from './routes/task.routes';
 import goalRoutes from './routes/goal.routes';
 import reflectionRoutes from './routes/reflection.routes';
+import recurringTaskRoutes from './routes/recurring-task.routes';
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ app.use('/auth', authRoutes);
 app.use('/tasks', taskRoutes);
 app.use('/goals', goalRoutes);
 app.use('/reflections', reflectionRoutes);
+app.use('/recurring-tasks', recurringTaskRoutes);
 
 app.get('/health', (req, res) => {
   res.send('OK');
