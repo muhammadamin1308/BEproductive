@@ -14,6 +14,7 @@ export const GoalsPage = () => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<Goal['level']>('MONTH');
   const [formData, setFormData] = useState({
     title: '',
@@ -40,8 +41,13 @@ export const GoalsPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post('/goals', formData);
+      if (editingGoal) {
+        await api.put(`/goals/${editingGoal.id}`, formData);
+      } else {
+        await api.post('/goals', formData);
+      }
       setShowModal(false);
+      setEditingGoal(null);
       setFormData({ title: '', description: '', level: 'MONTH' });
       fetchGoals();
     } catch (error) {
@@ -49,7 +55,29 @@ export const GoalsPage = () => {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this goal?')) return;
+    
+    try {
+      await api.delete(`/goals/${id}`);
+      fetchGoals();
+    } catch (error) {
+      console.error('Error deleting goal:', error);
+    }
+  };
+
+  const handleEdit = (goal: Goal) => {
+    setEditingGoal(goal);
+    setFormData({
+      title: goal.title,
+      description: goal.description || '',
+      level: goal.level,
+    });
+    setShowModal(true);
+  };
+
   const handleNewGoal = () => {
+    setEditingGoal(null);
     setFormData({ title: '', description: '', level: selectedLevel });
     setShowModal(true);
   };
@@ -109,14 +137,32 @@ export const GoalsPage = () => {
           filteredGoals.map((goal) => (
             <div 
               key={goal.id}
-              className="bg-surface p-5 rounded-xl border border-slate-100 dark:border-white/5 shadow-soft hover:shadow-md transition-all"
+              className="bg-surface p-5 rounded-xl border border-slate-100 dark:border-white/5 shadow-soft hover:shadow-md transition-all group"
             >
-              <h3 className="font-semibold text-primary-text text-lg">
-                {goal.title}
-              </h3>
-              {goal.description && (
-                <p className="text-sm text-secondary-text mt-2">{goal.description}</p>
-              )}
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-primary-text text-lg">
+                    {goal.title}
+                  </h3>
+                  {goal.description && (
+                    <p className="text-sm text-secondary-text mt-2">{goal.description}</p>
+                  )}
+                </div>
+                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity ml-4">
+                  <button
+                    onClick={() => handleEdit(goal)}
+                    className="text-xs text-cta hover:underline font-medium px-2 py-1"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(goal.id)}
+                    className="text-xs text-red-500 hover:underline font-medium px-2 py-1"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
             </div>
           ))
         ) : (
@@ -137,7 +183,7 @@ export const GoalsPage = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-surface rounded-2xl max-w-md w-full p-6 shadow-xl">
             <h2 className="text-xl font-bold text-primary-text mb-4">
-              New Goal
+              {editingGoal ? 'Edit Goal' : 'New Goal'}
             </h2>
             <form onSubmit={handleSubmit}>
               <div className="space-y-4">
@@ -185,6 +231,7 @@ export const GoalsPage = () => {
                   type="button"
                   onClick={() => {
                     setShowModal(false);
+                    setEditingGoal(null);
                     setFormData({ title: '', description: '', level: 'MONTH' });
                   }}
                   className="flex-1 px-4 py-2 border border-slate-200 dark:border-white/10 rounded-lg text-primary-text hover:bg-background transition-colors"
@@ -195,7 +242,7 @@ export const GoalsPage = () => {
                   type="submit"
                   className="flex-1 px-4 py-2 bg-cta text-white rounded-lg hover:opacity-90 transition-opacity"
                 >
-                  Create
+                  {editingGoal ? 'Save' : 'Create'}
                 </button>
               </div>
             </form>
