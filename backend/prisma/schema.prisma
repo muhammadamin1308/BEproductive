@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  googleId  String   @unique
+  email     String   @unique
+  name      String?
+  timezone  String?
+  createdAt DateTime @default(now())
+  goals     Goal[]
+  tasks     Task[]
+}
+
+model Goal {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  level        String    // YEAR, QUARTER, MONTH, WEEK
+  title        String
+  description  String?
+  parentGoalId String?
+  parentGoal   Goal?     @relation("GoalHierarchy", fields: [parentGoalId], references: [id])
+  subGoals     Goal[]    @relation("GoalHierarchy")
+  tasks        Task[]
+}
+
+model Task {
+  id               String         @id @default(uuid())
+  userId           String
+  user             User           @relation(fields: [userId], references: [id])
+  title            String
+  description      String?
+  date             String         // YYYY-MM-DD format for easier querying
+  priority         Int            @default(1) // 1, 2, 3
+  estimatedMinutes Int?
+  goalId           String?
+  goal             Goal?          @relation(fields: [goalId], references: [id])
+  status           String         @default("TODO") // TODO, DONE, SKIPPED
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  pomodorosTotal   Int            @default(1)
+  pomodorosCompleted Int          @default(0)
+  focusSessions    FocusSession[]
+}
+
+model FocusSession {
+  id                 String    @id @default(uuid())
+  taskId             String
+  task               Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  startTime          DateTime
+  endTime            DateTime?
+  note               String?
+  interruptionReason String?
+}

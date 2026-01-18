@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+
+  /* Light Theme (Default) */
+  --color-primary-bg: #F8F9FA;
+  --color-primary-text: #2D3436;
+  --color-secondary-text: #636E72;
+  --color-secondary-accent: #E2E2E2;
+  --color-surface: #FFFFFF;
+  --color-cta: #375a64;
+}
+
+/* Target html.dark specifically */
+html.dark {
+  /* Dark Theme */
+  --color-primary-bg: #121212;
+  /* Deepest Gray/Black */
+  --color-primary-text: #E2E2E2;
+  /* Soft White */
+  --color-secondary-text: #A1A1AA;
+  /* Muted Gray */
+  --color-secondary-accent: #27272A;
+  /* Dark Accent */
+  --color-surface: #1E1E1E;
+  /* Slightly Lighter Gray Card */
+  --color-cta: #4A7A85;
+  /* Slightly lighter Teal */
+}
+
+body {
+  background-color: var(--color-primary-bg);
+  color: var(--color-primary-text);
+  transition: background-color 0.3s, color 0.3s;
+}
