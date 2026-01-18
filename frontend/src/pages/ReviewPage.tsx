@@ -48,7 +48,7 @@ export const ReviewPage = () => {
 
   useEffect(() => {
     fetchData();
-  }, [weekOffset]);
+  }, [weekOffset, weekStartStr, weekEndStr]);
 
   const fetchData = async () => {
     try {
@@ -59,6 +59,8 @@ export const ReviewPage = () => {
         params: { startDate: weekStartStr, endDate: weekEndStr },
       });
       setStats(statsRes.data);
+      
+      console.log('Weekly stats:', statsRes.data); // Debug log
 
       // Fetch reflection for this week
       const reflectionRes = await api.get('/reflections', {
@@ -120,6 +122,13 @@ export const ReviewPage = () => {
       <header className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-primary-text">Weekly Review</h1>
         <div className="flex items-center gap-2">
+          <button
+            onClick={fetchData}
+            className="p-2 hover:bg-surface rounded-lg transition-colors text-cta"
+            title="Refresh"
+          >
+            ↻
+          </button>
           <button
             onClick={() => setWeekOffset(weekOffset - 1)}
             className="p-2 hover:bg-surface rounded-lg transition-colors text-primary-text"

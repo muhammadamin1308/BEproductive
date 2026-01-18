@@ -77,11 +77,26 @@ export const TaskCard = ({ task }: TaskCardProps) => {
         }
     });
 
+    const toggleStatusMutation = useMutation({
+        mutationFn: async () => {
+            const newStatus = task.status === 'DONE' ? 'TODO' : 'DONE';
+            await api.patch(`/tasks/${task.id}/status`, { status: newStatus });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        }
+    });
+
     const handleStartFocus = (e: React.MouseEvent) => {
         e.stopPropagation();
         setActiveTask(task as unknown as Task);
         startTimer();
         navigate('/focus');
+    };
+
+    const handleToggleStatus = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        toggleStatusMutation.mutate();
     };
 
     const isDone = task.status === 'DONE';
@@ -166,6 +181,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
 
                 {/* Custom Radio/Check */}
                 <button
+                    onClick={handleToggleStatus}
                     className={cn(
                         "mt-1 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors shrink-0",
                         isDone

@@ -136,6 +136,18 @@ export const updateTaskProgress = async (req: AuthRequest, res: Response) => {
     const existingTask = await prisma.task.findFirst({ where: { id: taskId, userId } });
     if (!existingTask) return res.status(404).json({ error: 'Task not found' });
 
+    // Create a focus session for this completed pomodoro (25 minutes)
+    const now = new Date();
+    const startTime = new Date(now.getTime() - 25 * 60 * 1000); // 25 minutes ago
+    
+    await prisma.focusSession.create({
+      data: {
+        taskId: taskId,
+        startTime: startTime,
+        endTime: now,
+      },
+    });
+
     const updatedTask = await prisma.task.update({
       where: { id: taskId },
       data: { 
