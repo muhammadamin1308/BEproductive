@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Play, Clock } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { TaskCard } from '../components/TaskCard';
 import { useAuthStore } from '../store/useAuthStore';
-import { useFocusStore } from '../store/useFocusStore';
 import { format } from 'date-fns';
 import { api } from '../lib/axios';
 import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core';
@@ -13,14 +11,14 @@ import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-ki
 const getTodayDate = () => new Date().toISOString().split('T')[0];
 
 export const TodayPage = () => {
-    const navigate = useNavigate();
     const [newTaskTitle, setNewTaskTitle] = useState('');
     const [newTaskDescription, setNewTaskDescription] = useState('');
     const [pomodoros, setPomodoros] = useState(1);
     const [showTimeFields, setShowTimeFields] = useState(false);
+    const [showAddTaskForm, setShowAddTaskForm] = useState(false);
     const [startTime, setStartTime] = useState('');
     const [endTime, setEndTime] = useState('');
-    const user = useAuthStore((state) => state.user);
+    useAuthStore((state) => state.user);
     const queryClient = useQueryClient();
     const todayDate = getTodayDate();
     const displayDate = format(new Date(), 'EEEE, MMMM d');
@@ -52,6 +50,7 @@ export const TodayPage = () => {
             setStartTime('');
             setEndTime('');
             setShowTimeFields(false);
+            setShowAddTaskForm(false);
         },
     });
 
@@ -90,23 +89,38 @@ export const TodayPage = () => {
     };
 
     if (isLoading) return <div className="p-10 text-center text-secondary-text">Loading today's plan...</div>;
-
-    const incompleteTasks = tasks?.filter((t: any) => t.status !== 'DONE') || [];
-    const canAddTask = incompleteTasks.length < 3;
+    
+    // Calculate total estimated time (each pomodoro = 25 minutes)
+    const totalPomodoros = tasks?.reduce((sum: number, task: any) => sum + task.pomodorosTotal, 0) || 0;
+    const totalMinutes = totalPomodoros * 25;
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    const estimatedTimeText = hours > 0 
+        ? `${hours}h ${minutes}m` 
+        : `${minutes}m`;
 
     return (
-        <div className="min-h-screen bg-primary-bg px-6 pt-12 pb-32">
+        <div className="min-h-screen bg-primary-bg px-6 pt-4 md:pt-12 pb-32">
             <div className="max-w-lg mx-auto">
                 {/* Header */}
-                <header className="mb-10 flex flex-wrap items-center gap-3">
-                    <h1 className="text-4xl font-bold text-primary-text tracking-tight">Today</h1>
-                    <div className="flex items-center gap-2 text-4xl font-bold text-secondary-text/50 tracking-tight">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 opacity-70">
-                            <path fillRule="evenodd" d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75a3 3 0 013 3v11.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V7.5a3 3 0 013-3H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z" clipRule="evenodd" />
-                        </svg>
-                        {displayDate}
-                    </div>
+                <header className="mb-8">
+                    <h1 className="text-3xl font-bold text-primary-text mb-2">Today</h1>
+                    <p className="text-lg text-secondary-text">{displayDate}</p>
                 </header>
+
+                {/* Estimated Time Summary */}
+                {tasks && tasks.length > 0 && (
+                    <div className="mb-6 bg-surface rounded-xl border border-slate-200 dark:border-white/10 p-5 shadow-soft">
+                        <div className="flex items-center gap-3 mb-1">
+                            <Clock className="w-5 h-5 text-cta" />
+                            <span className="text-sm font-medium text-secondary-text">Estimated Time</span>
+                        </div>
+                        <div className="flex items-baseline gap-2 mt-2">
+                            <span className="text-3xl font-bold text-cta">{estimatedTimeText}</span>
+                            <span className="text-sm text-secondary-text">· {totalPomodoros} pomodoros</span>
+                        </div>
+                    </div>
+                )}
 
                 {/* Task List */}
                 <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -116,120 +130,130 @@ export const TodayPage = () => {
                                 <TaskCard key={task.id} task={task} />
                             ))}
 
-                            {/* Add Task Button / Input */}
-                            <form onSubmit={handleAddTask} className="w-full">
-                                <div className="bg-surface rounded-2xl border border-secondary-accent p-4 shadow-soft">
-                                    <input
-                                        type="text"
-                                        value={newTaskTitle}
-                                        onChange={(e) => setNewTaskTitle(e.target.value)}
-                                        placeholder="Task title..."
-                                        className="w-full bg-slate-50 dark:bg-white/5 px-4 py-2.5 rounded-lg text-lg font-medium text-primary-text placeholder:text-secondary-text/60 outline-none mb-3 border border-slate-200 dark:border-white/10 focus:ring-2 focus:ring-cta"
-                                        autoFocus
-                                    />
-                                    
-                                    <textarea
-                                        value={newTaskDescription}
-                                        onChange={(e) => setNewTaskDescription(e.target.value)}
-                                        placeholder="Description (optional)..."
-                                        rows={2}
-                                        className="w-full bg-slate-50 dark:bg-white/5 px-4 py-2.5 rounded-lg text-sm text-primary-text placeholder:text-secondary-text/60 outline-none mb-4 resize-none border border-slate-200 dark:border-white/10 focus:ring-2 focus:ring-cta"
-                                    />
-                                    
-                                    {/* Time Fields (Toggleable) */}
-                                    {showTimeFields ? (
-                                        <div className="flex items-center gap-3 mb-4 bg-slate-50 dark:bg-white/5 p-3 rounded-lg">
-                                            <div className="flex-1">
-                                                <label className="block text-xs font-medium text-secondary-text mb-1.5">Start Time</label>
-                                                <input
-                                                    type="time"
-                                                    value={startTime}
-                                                    onChange={(e) => setStartTime(e.target.value)}
-                                                    className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-primary-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                                />
+                            {/* Add Task Form (Toggleable) */}
+                            {showAddTaskForm ? (
+                                <form onSubmit={handleAddTask} className="w-full">
+                                    <div className="bg-surface rounded-2xl border border-secondary-accent p-4 shadow-soft">
+                                        <input
+                                            type="text"
+                                            value={newTaskTitle}
+                                            onChange={(e) => setNewTaskTitle(e.target.value)}
+                                            placeholder="Task title..."
+                                            className="w-full bg-slate-50 dark:bg-white/5 px-4 py-2.5 rounded-lg text-lg font-medium text-primary-text placeholder:text-secondary-text/60 outline-none mb-3 border border-slate-200 dark:border-white/10 focus:ring-2 focus:ring-cta"
+                                            autoFocus
+                                        />
+                                        
+                                        <textarea
+                                            value={newTaskDescription}
+                                            onChange={(e) => setNewTaskDescription(e.target.value)}
+                                            placeholder="Description (optional)..."
+                                            rows={2}
+                                            className="w-full bg-slate-50 dark:bg-white/5 px-4 py-2.5 rounded-lg text-sm text-primary-text placeholder:text-secondary-text/60 outline-none mb-4 resize-none border border-slate-200 dark:border-white/10 focus:ring-2 focus:ring-cta"
+                                        />
+                                        
+                                        {/* Time Fields (Toggleable) */}
+                                        {showTimeFields ? (
+                                            <div className="flex items-center gap-3 mb-4 bg-slate-50 dark:bg-white/5 p-3 rounded-lg">
+                                                <div className="flex-1">
+                                                    <label className="block text-xs font-medium text-secondary-text mb-1.5">Start Time</label>
+                                                    <input
+                                                        type="time"
+                                                        value={startTime}
+                                                        onChange={(e) => setStartTime(e.target.value)}
+                                                        className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
+                                                    />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <label className="block text-xs font-medium text-secondary-text mb-1.5">End Time</label>
+                                                    <input
+                                                        type="time"
+                                                        value={endTime}
+                                                        onChange={(e) => setEndTime(e.target.value)}
+                                                        className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
+                                                    />
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setShowTimeFields(false);
+                                                        setStartTime('');
+                                                        setEndTime('');
+                                                    }}
+                                                    className="mt-5 px-3 py-2 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                >
+                                                    Remove
+                                                </button>
                                             </div>
-                                            <div className="flex-1">
-                                                <label className="block text-xs font-medium text-secondary-text mb-1.5">End Time</label>
-                                                <input
-                                                    type="time"
-                                                    value={endTime}
-                                                    onChange={(e) => setEndTime(e.target.value)}
-                                                    className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-primary-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                                />
-                                            </div>
+                                        ) : (
                                             <button
                                                 type="button"
-                                                onClick={() => {
-                                                    setShowTimeFields(false);
-                                                    setStartTime('');
-                                                    setEndTime('');
-                                                }}
-                                                className="mt-5 px-3 py-2 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                onClick={() => setShowTimeFields(true)}
+                                                className="flex items-center gap-2 px-3 py-2 mb-4 text-sm text-secondary-text hover:text-primary-text bg-slate-100 dark:bg-white/5 rounded-lg transition-colors"
                                             >
-                                                Remove
+                                                <Clock className="w-4 h-4" />
+                                                Add time
                                             </button>
-                                        </div>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowTimeFields(true)}
-                                            className="flex items-center gap-2 px-3 py-2 mb-4 text-sm text-secondary-text hover:text-primary-text bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
-                                        >
-                                            <Clock className="w-4 h-4" />
-                                            Add time
-                                        </button>
-                                    )}
+                                        )}
 
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <label className="text-xs font-bold text-secondary-text uppercase tracking-wider">Est. Pomodoros:</label>
-                                            <div className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 rounded-lg p-1">
-                                                {[1, 2, 3, 4, 6, 8].map((num) => (
-                                                    <button
-                                                        key={num}
-                                                        type="button"
-                                                        onClick={() => setPomodoros(num)}
-                                                        className={`w-8 h-8 rounded-md text-sm font-bold transition-all ${pomodoros === num ? 'bg-cta text-white shadow-sm' : 'text-secondary-text hover:bg-white/50 dark:hover:bg-white/10'}`}
-                                                    >
-                                                        {num}
-                                                    </button>
-                                                ))}
+                                        <div className="space-y-3">
+                                            <div>
+                                                <label className="block text-xs font-bold text-secondary-text uppercase tracking-wider mb-2">Est. Pomodoros:</label>
+                                                <div className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 rounded-lg p-1">
+                                                    {[1, 2, 3, 4, 6, 8].map((num) => (
+                                                        <button
+                                                            key={num}
+                                                            type="button"
+                                                            onClick={() => setPomodoros(num)}
+                                                            className={`w-10 h-10 rounded-md text-sm font-bold transition-all ${pomodoros === num ? 'bg-cta text-white shadow-sm' : 'text-secondary-text hover:bg-white/50 dark:hover:bg-white/10'}`}
+                                                        >
+                                                            {num}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                <div className="mt-2 text-xs text-secondary-text">
+                                                    Total: {pomodoros * 25} min + breaks
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="flex gap-2 pt-2">
+                                                <button
+                                                    type="submit"
+                                                    className="flex-1 bg-cta text-white py-3 rounded-xl font-semibold hover:brightness-110 transition-all shadow-md active:scale-95 disabled:opacity-50"
+                                                    disabled={!newTaskTitle.trim()}
+                                                >
+                                                    Add Task
+                                                </button>
                                             </div>
                                         </div>
-                                        <button
-                                            type="submit"
-                                            className="bg-cta text-white w-10 h-10 rounded-xl flex items-center justify-center hover:brightness-110 transition-all shadow-md active:scale-95 disabled:opacity-50"
-                                            disabled={!newTaskTitle.trim()}
-                                        >
-                                            +
-                                        </button>
-                                    </div>
-                                    <div className="mt-2 text-xs text-secondary-text text-right">
-                                        Total: {pomodoros * 25} min + breaks
-                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowAddTaskForm(false);
+                                            setNewTaskTitle('');
+                                            setNewTaskDescription('');
+                                            setStartTime('');
+                                            setEndTime('');
+                                            setShowTimeFields(false);
+                                            setPomodoros(1);
+                                        }}
+                                        className="mt-3 w-full text-sm text-secondary-text hover:text-red-600 transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
                                 </div>
                             </form>
+                            ) : (
+                                <button
+                                    onClick={() => setShowAddTaskForm(true)}
+                                    className="w-full bg-cta hover:bg-[#2c4850] text-white font-semibold text-lg py-4 px-8 rounded-xl shadow-xl shadow-cta/20 flex items-center justify-center gap-3 transition-transform active:scale-95"
+                                >
+                                    <Play className="w-5 h-5 fill-current" />
+                                    Add Task
+                                </button>
+                            )}
                         </div>
                     </SortableContext>
                 </DndContext>
-
-                {/* Global CTA - Start Focus Session */}
-                <div className="fixed bottom-24 left-0 right-0 md:static md:mt-12 px-6 flex justify-center pointer-events-none">
-                    <button
-                        onClick={() => {
-                            const todoTasks = tasks?.filter((t: any) => t.status !== 'DONE') || [];
-                            if (todoTasks.length > 0) {
-                                useFocusStore.getState().setActiveTask(todoTasks[0]);
-                            }
-                            useFocusStore.getState().startTimer();
-                            navigate('/focus');
-                        }}
-                        className="pointer-events-auto bg-cta hover:bg-[#2c4850] text-white font-semibold text-lg py-4 px-8 rounded-xl w-full max-w-sm shadow-xl shadow-cta/20 flex items-center justify-center gap-3 transition-transform active:scale-95"
-                    >
-                        <Play className="w-5 h-5 fill-current" />
-                        Start Focus Session
-                    </button>
-                </div>
             </div>
         </div>
     );

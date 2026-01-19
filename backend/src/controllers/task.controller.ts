@@ -227,6 +227,15 @@ export const updateTaskProgress = async (req: AuthRequest, res: Response) => {
       },
     });
 
+    // If all pomodoros are completed, mark task as done
+    if (updatedTask.pomodorosCompleted >= updatedTask.pomodorosTotal) {
+      await prisma.task.update({
+        where: { id: taskId },
+        data: { status: 'DONE' },
+      });
+      updatedTask.status = 'DONE';
+    }
+
     res.json(updatedTask);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update progress' });

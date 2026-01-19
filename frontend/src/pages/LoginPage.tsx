@@ -1,4 +1,3 @@
-import React from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import { api } from '../lib/axios';
 import { useAuthStore } from '../store/useAuthStore';

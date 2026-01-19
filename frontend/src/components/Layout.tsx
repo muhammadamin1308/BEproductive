@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Target, Trophy, ClipboardCheck, Repeat, Moon, Sun, LogOut } from 'lucide-react';
+import { LayoutDashboard, Target, Trophy, ClipboardCheck, Moon, Sun, LogOut, MoreVertical } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuthStore } from '../store/useAuthStore';
 import { useThemeStore } from '../store/useThemeStore';
@@ -9,6 +9,7 @@ export const Layout = () => {
     const { pathname } = useLocation();
     const logout = useAuthStore(state => state.logout);
     const { theme, toggleTheme } = useThemeStore();
+    const [showMobileMenu, setShowMobileMenu] = useState(false);
 
     // Ensure theme class is applied on mount/change
     useEffect(() => {
@@ -66,6 +67,7 @@ export const Layout = () => {
                             onClick={toggleTheme}
                             className="p-2 rounded-full text-secondary-text hover:bg-slate-100 dark:hover:bg-white/5 hover:text-primary-text transition-colors"
                             title="Toggle Theme"
+                            aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
                         >
                             {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
                         </button>
@@ -73,6 +75,7 @@ export const Layout = () => {
                             onClick={logout}
                             className="p-2 rounded-full text-secondary-text hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 transition-colors"
                             title="Logout"
+                            aria-label="Log out"
                         >
                             <LogOut className="w-5 h-5" />
                         </button>
@@ -82,19 +85,51 @@ export const Layout = () => {
 
             {/* Main Content Area */}
             {/* Added top padding to account for the floating header */}
-            <main className="flex-1 pb-32 md:pb-8 pt-32 px-4 md:px-0">
+            <main className="flex-1 pb-32 md:pb-8 pt-8 md:pt-32 px-4 md:px-0">
                 <Outlet />
             </main>
 
 
             {/* Mobile Bottom Navigation (visible on sm-) */}
-            <nav className="md:hidden fixed bottom-6 left-6 right-6 bg-surface/90 backdrop-blur-md border border-slate-200/50 dark:border-white/10 rounded-2xl px-6 py-4 z-50 flex justify-between items-center shadow-xl shadow-slate-200/20 dark:shadow-black/20">
-                {navItems.map(({ to, icon: Icon, label }) => {
+            <nav className="md:hidden fixed bottom-6 left-6 right-6 bg-surface/90 backdrop-blur-md border border-slate-200/50 dark:border-white/10 rounded-2xl px-4 py-4 z-50 flex justify-around items-center shadow-xl shadow-slate-200/20 dark:shadow-black/20">
+                {/* Today */}
+                <NavLink
+                    to="/"
+                    aria-label="Today"
+                    className={cn(
+                        "flex flex-col items-center gap-1 p-2 rounded-xl transition-colors min-w-[50px]",
+                        pathname === '/'
+                            ? "text-cta"
+                            : "text-secondary-text hover:text-primary-text"
+                    )}
+                >
+                    <LayoutDashboard className={cn("w-6 h-6 transition-transform", pathname === '/' && "-translate-y-1 scale-110")} strokeWidth={pathname === '/' ? 2.5 : 2} />
+                    {pathname === '/' && <span className="absolute -bottom-1 w-1 h-1 bg-cta rounded-full" />}
+                </NavLink>
+                
+                {/* Center Focus Button */}
+                <NavLink
+                    to="/focus"
+                    aria-label="Focus"
+                    className={cn(
+                        "flex flex-col items-center gap-1 p-3 rounded-xl transition-colors",
+                        pathname === '/focus'
+                            ? "text-cta"
+                            : "text-secondary-text hover:text-primary-text"
+                    )}
+                >
+                    <Target className={cn("w-7 h-7 transition-transform", pathname === '/focus' && "-translate-y-1 scale-110")} strokeWidth={pathname === '/focus' ? 2.5 : 2} />
+                    {pathname === '/focus' && <span className="absolute -bottom-1 w-1 h-1 bg-cta rounded-full" />}
+                </NavLink>
+                
+                {/* Goals and Review */}
+                {navItems.slice(2).map(({ to, icon: Icon, label }) => {
                     const isActive = pathname === to;
                     return (
                         <NavLink
                             key={to}
                             to={to}
+                            aria-label={label}
                             className={cn(
                                 "flex flex-col items-center gap-1 p-2 rounded-xl transition-colors min-w-[50px]",
                                 isActive
@@ -107,13 +142,50 @@ export const Layout = () => {
                         </NavLink>
                     );
                 })}
-                {/* Mobile Theme Toggle */}
-                <button
-                    onClick={toggleTheme}
-                    className="flex flex-col items-center gap-1 p-2 rounded-xl transition-colors min-w-[50px] text-secondary-text"
-                >
-                    {theme === 'light' ? <Moon className="w-6 h-6" /> : <Sun className="w-6 h-6" />}
-                </button>
+                
+                {/* 3-dot menu button */}
+                <div className="relative">
+                    <button
+                        onClick={() => setShowMobileMenu(!showMobileMenu)}
+                        className="flex flex-col items-center gap-1 p-2 rounded-xl transition-colors min-w-[50px] text-secondary-text hover:text-primary-text"
+                        aria-label="Open menu"
+                        aria-expanded={showMobileMenu}
+                    >
+                        <MoreVertical className="w-6 h-6" />
+                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    {showMobileMenu && (
+                        <>
+                            <div 
+                                className="fixed inset-0 z-40" 
+                                onClick={() => setShowMobileMenu(false)}
+                            />
+                            <div className="absolute bottom-full right-0 mb-2 bg-surface border border-slate-200 dark:border-white/10 rounded-xl shadow-xl overflow-hidden z-50 min-w-[160px]">
+                                <button
+                                    onClick={() => {
+                                        toggleTheme();
+                                        setShowMobileMenu(false);
+                                    }}
+                                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-primary-text hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                                >
+                                    {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+                                    <span>{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        logout();
+                                        setShowMobileMenu(false);
+                                    }}
+                                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                >
+                                    <LogOut className="w-5 h-5" />
+                                    <span>Logout</span>
+                                </button>
+                            </div>
+                        </>
+                    )}
+                </div>
             </nav>
         </div>
     );

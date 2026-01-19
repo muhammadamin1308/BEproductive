@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Play, Pause, RotateCcw } from 'lucide-react';
 import { useFocusStore } from '../store/useFocusStore';
 
@@ -10,7 +9,6 @@ export const FocusPage = () => {
         startTimer,
         pauseTimer,
         resetTimer,
-        tick
     } = useFocusStore();
 
     // Timer is now managed globally by FocusTimerManager

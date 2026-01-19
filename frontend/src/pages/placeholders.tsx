@@ -1,5 +1,3 @@
-import React from 'react';
-
 export const TodayPage = () => <div className="p-4"><h1>Today Page</h1></div>;
 export const FocusPage = () => <div className="p-4"><h1>Focus Page</h1></div>;
 export const GoalsPage = () => <div className="p-4"><h1>Goals Page</h1></div>;

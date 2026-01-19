@@ -141,9 +141,9 @@ export const GoalsPage = () => {
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-primary-text text-lg">
+                  <h2 className="font-semibold text-primary-text text-lg">
                     {goal.title}
-                  </h3>
+                  </h2>
                   {goal.description && (
                     <p className="text-sm text-secondary-text mt-2">{goal.description}</p>
                   )}

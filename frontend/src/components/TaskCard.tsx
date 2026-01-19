@@ -175,6 +175,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
                     {...attributes}
                     {...listeners}
                     className="mt-1 p-1 text-secondary-text/40 hover:text-secondary-text cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label="Drag to reorder task"
                 >
                     <GripVertical className="w-4 h-4" />
                 </button>
@@ -182,6 +183,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
                 {/* Custom Radio/Check */}
                 <button
                     onClick={handleToggleStatus}
+                    aria-label={isDone ? 'Mark task as incomplete' : 'Mark task as complete'}
                     className={cn(
                         "mt-1 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors shrink-0",
                         isDone
@@ -193,12 +195,12 @@ export const TaskCard = ({ task }: TaskCardProps) => {
                 </button>
 
                 <div className="flex-1 min-w-0">
-                    <h3 className={cn(
+                    <h2 className={cn(
                         "font-medium text-lg leading-snug transition-colors pr-8",
                         isDone ? "text-secondary-text line-through" : "text-primary-text"
                     )}>
                         {task.title}
-                    </h3>
+                    </h2>
 
                     {task.description && (
                         <p className="text-sm text-secondary-text mt-1 line-clamp-2">
@@ -216,9 +218,9 @@ export const TaskCard = ({ task }: TaskCardProps) => {
                         </div>
 
                         {/* Stats */}
-                        <div className="flex items-center justify-between text-xs text-secondary-text font-medium">
-                            <span>{task.pomodorosCompleted}/{task.pomodorosTotal} sessions</span>
-                            <span>{Math.floor((task.pomodorosTotal * 30) / 60)}h {(task.pomodorosTotal * 30) % 60}m</span>
+                        <div className="flex items-center justify-between text-xs">
+                            <span className="text-secondary-text font-medium">{task.pomodorosCompleted}/{task.pomodorosTotal} sessions</span>
+                            <span className="text-secondary-text">{Math.floor((task.pomodorosTotal * 25) / 60)}h {(task.pomodorosTotal * 25) % 60}m</span>
                         </div>
                     </div>
                 </div>
@@ -231,6 +233,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
                             onClick={handleStartFocus}
                             className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-2 text-cta hover:bg-cta/10 rounded-lg transition-all duration-300"
                             title="Start Focus"
+                            aria-label="Start focus session for this task"
                         >
                             <Play className="w-5 h-5 fill-current" />
                         </button>
@@ -241,6 +244,8 @@ export const TaskCard = ({ task }: TaskCardProps) => {
                         <button
                             onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}
                             className="p-2 text-secondary-text hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                            aria-label="Task options"
+                            aria-expanded={isMenuOpen}
                         >
                             <MoreVertical className="w-4 h-4" />
                         </button>

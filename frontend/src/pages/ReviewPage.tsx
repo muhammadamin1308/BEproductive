@@ -60,7 +60,6 @@ export const ReviewPage = () => {
       });
       setStats(statsRes.data);
       
-      console.log('Weekly stats:', statsRes.data); // Debug log
 
       // Fetch reflection for this week
       const reflectionRes = await api.get('/reflections', {
@@ -118,87 +117,89 @@ export const ReviewPage = () => {
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <header className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-primary-text">Weekly Review</h1>
-        <div className="flex items-center gap-2">
+    <div className="max-w-4xl mx-auto px-4 py-4 md:py-8">
+      <header className="mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold text-primary-text mb-4">Weekly Review</h1>
+        <div className="flex items-center justify-between bg-surface rounded-xl border border-slate-200 dark:border-white/10 p-3">
           <button
             onClick={fetchData}
-            className="p-2 hover:bg-surface rounded-lg transition-colors text-cta"
+            className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors text-cta"
             title="Refresh"
           >
             ↻
           </button>
-          <button
-            onClick={() => setWeekOffset(weekOffset - 1)}
-            className="p-2 hover:bg-surface rounded-lg transition-colors text-primary-text"
-          >
-            ←
-          </button>
-          <span className="text-sm text-secondary-text min-w-[200px] text-center">
-            {format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}
-          </span>
-          <button
-            onClick={() => setWeekOffset(weekOffset + 1)}
-            disabled={weekOffset >= 0}
-            className="p-2 hover:bg-surface rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-primary-text"
-          >
-            →
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setWeekOffset(weekOffset - 1)}
+              className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors text-primary-text"
+            >
+              ←
+            </button>
+            <span className="text-xs md:text-sm text-secondary-text px-2 whitespace-nowrap">
+              {format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}
+            </span>
+            <button
+              onClick={() => setWeekOffset(weekOffset + 1)}
+              disabled={weekOffset >= 0}
+              className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-primary-text"
+            >
+              →
+            </button>
+          </div>
           {weekOffset !== 0 && (
             <button
               onClick={() => setWeekOffset(0)}
-              className="ml-2 px-3 py-1 text-sm text-cta hover:opacity-80 transition-opacity"
+              className="px-3 py-1.5 text-xs md:text-sm text-cta hover:bg-cta/10 rounded-lg transition-colors"
             >
-              Current Week
+              Today
             </button>
           )}
         </div>
       </header>
 
       {/* Weekly Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl text-center">
-          <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-1">
+      <div className="grid grid-cols-2 gap-3 md:gap-4 mb-6">
+        <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 md:p-5 rounded-xl text-center border border-indigo-100 dark:border-indigo-900/50">
+          <div className="text-2xl md:text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-1">
             {stats?.completedTasks || 0}
           </div>
-          <div className="text-sm text-indigo-700 dark:text-indigo-300 font-medium">
+          <div className="text-xs md:text-sm text-indigo-700 dark:text-indigo-300 font-medium">
             Tasks Done
           </div>
         </div>
         
-        <div className="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl text-center">
-          <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-1">
+        <div className="bg-emerald-50 dark:bg-emerald-900/20 p-4 md:p-5 rounded-xl text-center border border-emerald-100 dark:border-emerald-900/50">
+          <div className="text-2xl md:text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-1">
             {stats?.completionRate || 0}%
           </div>
-          <div className="text-sm text-emerald-700 dark:text-emerald-300 font-medium">
+          <div className="text-xs md:text-sm text-emerald-700 dark:text-emerald-300 font-medium">
             Completion Rate
           </div>
         </div>
         
-        <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-xl text-center">
-          <div className="text-3xl font-bold text-amber-600 dark:text-amber-400 mb-1">
+        <div className="bg-amber-50 dark:bg-amber-900/20 p-4 md:p-5 rounded-xl text-center border border-amber-100 dark:border-amber-900/50">
+          <div className="text-2xl md:text-3xl font-bold text-amber-600 dark:text-amber-400 mb-1">
             {stats?.totalFocusHours || 0}h
           </div>
-          <div className="text-sm text-amber-700 dark:text-amber-300 font-medium">
+          <div className="text-xs md:text-sm text-amber-700 dark:text-amber-300 font-medium">
             Focus Time
           </div>
         </div>
         
-        <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-xl text-center">
-          <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-1">
+        <div className="bg-purple-50 dark:bg-purple-900/20 p-4 md:p-5 rounded-xl text-center border border-purple-100 dark:border-purple-900/50">
+          <div className="text-2xl md:text-3xl font-bold text-purple-600 dark:text-purple-400 mb-1">
             {stats ? stats.totalSessions - stats.interruptedSessions : 0}
           </div>
-          <div className="text-sm text-purple-700 dark:text-purple-300 font-medium">
+          <div className="text-xs md:text-sm text-purple-700 dark:text-purple-300 font-medium">
             Focused Sessions
           </div>
         </div>
       </div>
 
       {/* Daily Progress Chart */}
-      <div className="bg-surface rounded-xl border border-slate-200 dark:border-white/10 shadow-soft p-6 mb-8">
-        <h2 className="font-semibold text-primary-text mb-4">Daily Task Completion</h2>
-        <div className="flex items-end justify-between gap-2 h-48">
+      <div className="bg-surface rounded-xl border border-slate-200 dark:border-white/10 shadow-soft p-4 md:p-6 mb-6 md:mb-8">
+        <h2 className="font-semibold text-primary-text mb-4 text-base md:text-lg">Daily Task Completion</h2>
+        <div className="flex items-end justify-between gap-1.5 md:gap-2 h-40 md:h-48">
           {weekDays.map((day) => {
             const dateStr = format(day, 'yyyy-MM-dd');
             const dayStats = stats?.dailyStats[dateStr] || { completed: 0, total: 0 };
@@ -207,7 +208,7 @@ export const ReviewPage = () => {
 
             return (
               <div key={dateStr} className="flex-1 flex flex-col items-center gap-2">
-                <div className="w-full bg-slate-100 dark:bg-white/5 rounded-t-lg relative" style={{ height: '150px' }}>
+                <div className="w-full bg-slate-100 dark:bg-white/5 rounded-t-lg relative" style={{ height: '120px' }}>
                   {height > 0 && (
                     <div
                       className="absolute bottom-0 w-full bg-cta rounded-t-lg transition-all"
@@ -216,10 +217,10 @@ export const ReviewPage = () => {
                   )}
                 </div>
                 <div className="text-center">
-                  <div className="text-xs font-medium text-primary-text">
+                  <div className="text-[10px] md:text-xs font-medium text-primary-text">
                     {format(day, 'EEE')}
                   </div>
-                  <div className="text-xs text-secondary-text">
+                  <div className="text-[10px] md:text-xs text-secondary-text">
                     {dayStats.completed}/{dayStats.total}
                   </div>
                 </div>
@@ -262,48 +263,48 @@ export const ReviewPage = () => {
         <form onSubmit={handleSaveReflection} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-primary-text mb-2">
-              🎉 What went well this week?
+              What went well this week?
             </label>
             <textarea
               value={formData.wentWell}
               onChange={(e) => setFormData({ ...formData, wentWell: e.target.value })}
-              className="w-full p-3 rounded-lg border border-slate-200 dark:border-white/10 bg-background text-primary-text focus:ring-2 focus:ring-cta outline-none resize-none h-24 placeholder:text-secondary-text"
+              className="w-full p-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/50 text-primary-text focus:ring-2 focus:ring-cta outline-none resize-none h-24 placeholder:text-secondary-text"
               placeholder="I successfully completed..."
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-primary-text mb-2">
-              🎯 Top 3 accomplishments
+              Top 3 accomplishments
             </label>
             <textarea
               value={formData.accomplishments}
               onChange={(e) => setFormData({ ...formData, accomplishments: e.target.value })}
-              className="w-full p-3 rounded-lg border border-slate-200 dark:border-white/10 bg-background text-primary-text focus:ring-2 focus:ring-cta outline-none resize-none h-24 placeholder:text-secondary-text"
+              className="w-full p-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/50 text-primary-text focus:ring-2 focus:ring-cta outline-none resize-none h-24 placeholder:text-secondary-text"
               placeholder="1. &#10;2. &#10;3. "
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-primary-text mb-2">
-              💪 What could be improved?
+              What could be improved?
             </label>
             <textarea
               value={formData.toImprove}
               onChange={(e) => setFormData({ ...formData, toImprove: e.target.value })}
-              className="w-full p-3 rounded-lg border border-slate-200 dark:border-white/10 bg-background text-primary-text focus:ring-2 focus:ring-cta outline-none resize-none h-24 placeholder:text-secondary-text"
+              className="w-full p-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/50 text-primary-text focus:ring-2 focus:ring-cta outline-none resize-none h-24 placeholder:text-secondary-text"
               placeholder="Next week I will..."
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-primary-text mb-2">
-              🚧 Challenges faced
+              Challenges faced
             </label>
             <textarea
               value={formData.challenges}
               onChange={(e) => setFormData({ ...formData, challenges: e.target.value })}
-              className="w-full p-3 rounded-lg border border-slate-200 dark:border-white/10 bg-background text-primary-text focus:ring-2 focus:ring-cta outline-none resize-none h-24 placeholder:text-secondary-text"
+              className="w-full p-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/50 text-primary-text focus:ring-2 focus:ring-cta outline-none resize-none h-24 placeholder:text-secondary-text"
               placeholder="I struggled with..."
             />
           </div>

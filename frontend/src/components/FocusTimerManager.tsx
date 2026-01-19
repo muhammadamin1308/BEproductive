@@ -39,11 +39,11 @@ export const FocusTimerManager = () => {
             const modeLabel = mode === 'POMODORO' ? 'Focus' : 'Break';
             document.title = `${formatTime(timeLeft)} ${modeLabel}`;
         } else {
-            document.title = 'BEproductive';
+            document.title = 'BeProductive';
         }
 
         return () => {
-            document.title = 'BEproductive';
+            document.title = 'BePfixroductive';
         };
     }, [timeLeft, isActive, mode]);
 
