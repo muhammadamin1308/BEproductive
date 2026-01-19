@@ -4,8 +4,10 @@ import { useAuthStore } from '../store/useAuthStore';
 export const ProtectedRoute = () => {
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
     const isLoading = useAuthStore((state) => state.isLoading);
+    const hasHydrated = useAuthStore((state) => state._hasHydrated);
 
-    if (isLoading) {
+    // Wait for hydration from localStorage before making auth decisions
+    if (!hasHydrated || isLoading) {
         return <div className="flex items-center justify-center min-h-screen text-slate-500">Loading...</div>;
     }
 

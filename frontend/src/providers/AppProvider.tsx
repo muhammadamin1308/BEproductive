@@ -19,22 +19,35 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     const login = useAuthStore((state) => state.login);
     const logout = useAuthStore((state) => state.logout);
     const setLoading = useAuthStore((state) => state.setLoading);
+    const hasHydrated = useAuthStore((state) => state._hasHydrated);
 
     useEffect(() => {
+        // Wait for hydration before checking auth
+        if (!hasHydrated) return;
+
         const checkAuth = async () => {
+            // If offline, use cached auth state from localStorage
+            if (!navigator.onLine) {
+                setLoading(false);
+                return;
+            }
+
             try {
                 const res = await api.get('/auth/me');
                 if (res.data.user) {
                     login(res.data.user);
                 }
             } catch (error) {
-                logout();
-            } finally {
-                setLoading(false);
+                // Only logout if we're online and the request failed (invalid session)
+                if (navigator.onLine) {
+                    logout();
+                } else {
+                    setLoading(false);
+                }
             }
         };
         checkAuth();
-    }, [login, logout, setLoading]);
+    }, [login, logout, setLoading, hasHydrated]);
 
     return (
         <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}>
