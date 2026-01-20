@@ -8,7 +8,7 @@ export const ProtectedRoute = () => {
 
     // Wait for hydration from localStorage before making auth decisions
     if (!hasHydrated || isLoading) {
-        return <div className="flex items-center justify-center min-h-screen text-slate-500">Loading...</div>;
+        return <div className="flex items-center justify-center min-h-screen text-gray-500">Loading...</div>;
     }
 
     return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;

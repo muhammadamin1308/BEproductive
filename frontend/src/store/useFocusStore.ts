@@ -92,15 +92,23 @@ export const useFocusStore = create<FocusState>()(
                 // Finished a work session
                 const newCompleted = sessionsCompleted + 1;
                 
+                // Check if task would exceed its limit
+                if (activeTask && activeTask.pomodorosCompleted >= activeTask.pomodorosTotal) {
+                    // Task is already complete, don't update or continue
+                    set({ isActive: false, endTime: null });
+                    return;
+                }
+                
                 // Update Backend
                 state.syncTaskProgress();
                 
                 // Update local task state
                 if (activeTask) {
+                    const newPomodorosCompleted = activeTask.pomodorosCompleted + 1;
                     set({ 
                         activeTask: { 
                             ...activeTask, 
-                            pomodorosCompleted: activeTask.pomodorosCompleted + 1 
+                            pomodorosCompleted: newPomodorosCompleted
                         } 
                     });
                 }

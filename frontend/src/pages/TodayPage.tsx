@@ -155,7 +155,7 @@ export const TodayPage = () => {
 
                 {/* Estimated Time Summary */}
                 {tasks && tasks.length > 0 && (
-                    <div className="mb-6 bg-surface rounded-xl border border-slate-200 dark:border-white/10 p-5 shadow-soft">
+                    <div className="mb-6 bg-surface rounded-xl border border-gray-200 dark:border-white/10 p-5 shadow-soft">
                         <div className="flex items-center gap-3 mb-1">
                             <Clock className="w-5 h-5 text-cta" />
                             <span className="text-sm font-medium text-secondary-text">Estimated Time</span>
@@ -184,7 +184,7 @@ export const TodayPage = () => {
                                             value={newTaskTitle}
                                             onChange={(e) => setNewTaskTitle(e.target.value)}
                                             placeholder="Task title..."
-                                            className="w-full bg-slate-50 dark:bg-white/5 px-4 py-2.5 rounded-lg text-lg font-medium text-primary-text placeholder:text-secondary-text/60 outline-none mb-3 border border-slate-200 dark:border-white/10 focus:ring-2 focus:ring-cta"
+                                            className="w-full bg-gray-50 dark:bg-white/5 px-4 py-2.5 rounded-lg text-lg font-medium text-primary-text placeholder:text-secondary-text/60 outline-none mb-3 border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-cta"
                                             autoFocus
                                         />
                                         
@@ -193,19 +193,19 @@ export const TodayPage = () => {
                                             onChange={(e) => setNewTaskDescription(e.target.value)}
                                             placeholder="Description (optional)..."
                                             rows={2}
-                                            className="w-full bg-slate-50 dark:bg-white/5 px-4 py-2.5 rounded-lg text-sm text-primary-text placeholder:text-secondary-text/60 outline-none mb-4 resize-none border border-slate-200 dark:border-white/10 focus:ring-2 focus:ring-cta"
+                                            className="w-full bg-gray-50 dark:bg-white/5 px-4 py-2.5 rounded-lg text-sm text-primary-text placeholder:text-secondary-text/60 outline-none mb-4 resize-none border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-cta"
                                         />
                                         
                                         {/* Time Fields (Toggleable) */}
                                         {showTimeFields ? (
-                                            <div className="flex items-center gap-3 mb-4 bg-slate-50 dark:bg-white/5 p-3 rounded-lg">
+                                            <div className="flex items-center gap-3 mb-4 bg-gray-50 dark:bg-white/5 p-3 rounded-lg">
                                                 <div className="flex-1">
                                                     <label className="block text-xs font-medium text-secondary-text mb-1.5">Start Time</label>
                                                     <input
                                                         type="time"
                                                         value={startTime}
                                                         onChange={(e) => setStartTime(e.target.value)}
-                                                        className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
+                                                        className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
                                                     />
                                                 </div>
                                                 <div className="flex-1">
@@ -214,7 +214,7 @@ export const TodayPage = () => {
                                                         type="time"
                                                         value={endTime}
                                                         onChange={(e) => setEndTime(e.target.value)}
-                                                        className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
+                                                        className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
                                                     />
                                                 </div>
                                                 <button
@@ -233,7 +233,7 @@ export const TodayPage = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => setShowTimeFields(true)}
-                                                className="flex items-center gap-2 px-3 py-2 mb-4 text-sm text-secondary-text hover:text-primary-text bg-slate-100 dark:bg-white/5 rounded-lg transition-colors"
+                                                className="flex items-center gap-2 px-3 py-2 mb-4 text-sm text-secondary-text hover:text-primary-text bg-gray-100 dark:bg-white/5 rounded-lg transition-colors"
                                             >
                                                 <Clock className="w-4 h-4" />
                                                 Add time
@@ -243,7 +243,7 @@ export const TodayPage = () => {
                                         <div className="space-y-3">
                                             <div>
                                                 <label className="block text-xs font-bold text-secondary-text uppercase tracking-wider mb-2">Est. Pomodoros:</label>
-                                                <div className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 rounded-lg p-1">
+                                                <div className="flex items-center gap-1 bg-gray-100 dark:bg-white/5 rounded-lg p-1">
                                                     {[1, 2, 3, 4, 6, 8].map((num) => (
                                                         <button
                                                             key={num}
@@ -267,7 +267,7 @@ export const TodayPage = () => {
                                                         type="checkbox"
                                                         checked={isRecurring}
                                                         onChange={(e) => setIsRecurring(e.target.checked)}
-                                                        className="w-4 h-4 rounded border-slate-300 text-cta focus:ring-cta"
+                                                        className="w-4 h-4 rounded border-gray-300 text-cta focus:ring-cta"
                                                     />
                                                     <span className="text-sm font-medium text-primary-text flex items-center gap-1">
                                                         <Repeat className="w-4 h-4" />
@@ -276,7 +276,7 @@ export const TodayPage = () => {
                                                 </label>
                                                 
                                                 {isRecurring && (
-                                                    <div className="mt-3 p-3 bg-slate-50 dark:bg-white/5 rounded-lg space-y-3">
+                                                    <div className="mt-3 p-3 bg-gray-50 dark:bg-white/5 rounded-lg space-y-3">
                                                         <div className="flex gap-2">
                                                             <button
                                                                 type="button"
@@ -287,7 +287,7 @@ export const TodayPage = () => {
                                                                 className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                                                                     recurringPattern === 'DAILY'
                                                                         ? 'bg-cta text-white shadow-sm'
-                                                                        : 'bg-white dark:bg-slate-800 text-secondary-text hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10'
+                                                                        : 'bg-white dark:bg-gray-800 text-secondary-text hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-white/10'
                                                                 }`}
                                                             >
                                                                 Daily
@@ -301,7 +301,7 @@ export const TodayPage = () => {
                                                                 className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                                                                     recurringPattern === 'WEEKDAYS'
                                                                         ? 'bg-cta text-white shadow-sm'
-                                                                        : 'bg-white dark:bg-slate-800 text-secondary-text hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10'
+                                                                        : 'bg-white dark:bg-gray-800 text-secondary-text hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-white/10'
                                                                 }`}
                                                             >
                                                                 Weekdays
@@ -314,7 +314,7 @@ export const TodayPage = () => {
                                                                 className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                                                                     recurringPattern === 'CUSTOM'
                                                                         ? 'bg-cta text-white shadow-sm'
-                                                                        : 'bg-white dark:bg-slate-800 text-secondary-text hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10'
+                                                                        : 'bg-white dark:bg-gray-800 text-secondary-text hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-white/10'
                                                                 }`}
                                                             >
                                                                 Custom
@@ -333,7 +333,7 @@ export const TodayPage = () => {
                                                                             className={`w-9 h-9 rounded-full text-xs font-bold transition-all ${
                                                                                 selectedDays.includes(idx)
                                                                                     ? 'bg-cta text-white shadow-sm'
-                                                                                    : 'bg-white dark:bg-slate-800 text-secondary-text hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10'
+                                                                                    : 'bg-white dark:bg-gray-800 text-secondary-text hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-white/10'
                                                                             }`}
                                                                             title={['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][idx]}
                                                                         >

@@ -138,18 +138,18 @@ export const TaskCard = ({ task }: TaskCardProps) => {
                         value={editDesc}
                         onChange={(e) => setEditDesc(e.target.value)}
                         placeholder="Add a description..."
-                        className="w-full bg-slate-50 dark:bg-black/20 rounded-lg p-3 text-sm text-secondary-text outline-none resize-none h-20 mb-3"
+                        className="w-full bg-gray-50 dark:bg-black/20 rounded-lg p-3 text-sm text-secondary-text outline-none resize-none h-20 mb-3"
                     />
 
                     {/* Time Fields */}
-                    <div className="flex items-center gap-3 mb-4 bg-slate-50 dark:bg-white/5 p-3 rounded-lg">
+                    <div className="flex items-center gap-3 mb-4 bg-gray-50 dark:bg-white/5 p-3 rounded-lg">
                         <div className="flex-1">
                             <label className="block text-xs font-medium text-secondary-text mb-1.5">Start Time</label>
                             <input
                                 type="time"
                                 value={editStartTime}
                                 onChange={(e) => setEditStartTime(e.target.value)}
-                                className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
+                                className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
                             />
                         </div>
                         <div className="flex-1">
@@ -158,7 +158,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
                                 type="time"
                                 value={editEndTime}
                                 onChange={(e) => setEditEndTime(e.target.value)}
-                                className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
+                                className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
                             />
                         </div>
                     </div>
@@ -166,7 +166,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
                     {/* Pomodoro Editor */}
                     <div className="flex items-center gap-2 mb-4">
                         <label className="text-xs font-bold text-secondary-text uppercase tracking-wider">Est. Pomodoros:</label>
-                        <div className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 rounded-lg p-1">
+                        <div className="flex items-center gap-1 bg-gray-100 dark:bg-white/5 rounded-lg p-1">
                             {[1, 2, 3, 4, 6, 8].map((num) => (
                                 <button
                                     key={num}
@@ -199,7 +199,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
                         <button
                             type="button"
                             onClick={() => setIsEditing(false)}
-                            className="p-2 text-secondary-text hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg"
+                            className="p-2 text-secondary-text hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg"
                         >
                             <X className="w-4 h-4" />
                         </button>
@@ -222,8 +222,8 @@ export const TaskCard = ({ task }: TaskCardProps) => {
             className={cn(
                 "group relative bg-surface p-5 rounded-2xl border transition-all duration-300",
                 isDone
-                    ? "border-slate-100 dark:border-white/5 opacity-60 bg-slate-50 dark:bg-white/5"
-                    : "border-slate-100 dark:border-white/10 shadow-soft hover:shadow-md hover:border-indigo-100 dark:hover:border-indigo-900/30"
+                    ? "border-gray-300 dark:border-gray-600"
+                    : "border-gray-100 dark:border-white/10 shadow-soft hover:shadow-md hover:border-indigo-100 dark:hover:border-indigo-900/30"
             )}
         >
             <div className="flex items-start gap-4">
@@ -244,8 +244,8 @@ export const TaskCard = ({ task }: TaskCardProps) => {
                     className={cn(
                         "mt-1 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors shrink-0",
                         isDone
-                            ? "bg-slate-200 border-slate-200 dark:bg-white/20 dark:border-transparent text-slate-500"
-                            : "border-slate-200 dark:border-white/20 text-transparent hover:border-indigo-400"
+                            ? "bg-gray-200 border-gray-200 dark:bg-white/20 dark:border-transparent text-gray-500"
+                            : "border-gray-200 dark:border-white/20 text-transparent hover:border-indigo-400"
                     )}
                 >
                     <Check className="w-3.5 h-3.5" strokeWidth={3} />
@@ -267,7 +267,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
 
                     <div className="flex flex-col gap-2 mt-3">
                         {/* Progress Bar */}
-                        <div className="h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-1.5 w-full bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
                             <div
                                 className="h-full bg-cta transition-all duration-500 ease-out"
                                 style={{ width: `${Math.min((task.pomodorosCompleted / task.pomodorosTotal) * 100, 100)}%` }}
@@ -300,7 +300,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
                     <div className="relative" ref={menuRef}>
                         <button
                             onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}
-                            className="p-2 text-secondary-text hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="p-2 text-secondary-text hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
                             aria-label="Task options"
                             aria-expanded={isMenuOpen}
                         >
@@ -308,14 +308,14 @@ export const TaskCard = ({ task }: TaskCardProps) => {
                         </button>
 
                         {isMenuOpen && (
-                            <div className="absolute right-0 top-full mt-1 w-32 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-white/10 overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200">
+                            <div className="absolute right-0 top-full mt-1 w-32 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-white/10 overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200">
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         setIsEditing(true);
                                         setIsMenuOpen(false);
                                     }}
-                                    className="w-full px-4 py-2 text-left text-sm text-primary-text hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2"
+                                    className="w-full px-4 py-2 text-left text-sm text-primary-text hover:bg-gray-50 dark:hover:bg-white/5 flex items-center gap-2"
                                 >
                                     <Edit2 className="w-3.5 h-3.5" />
                                     Edit
@@ -347,7 +347,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
                                     deleteTaskMutation.mutate(false);
                                     setShowDeleteModal(false);
                                 }}
-                                className="w-full bg-slate-100 dark:bg-white/5 text-primary-text py-3 rounded-xl font-semibold hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+                                className="w-full bg-gray-100 dark:bg-white/5 text-primary-text py-3 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-white/10 transition-all"
                             >
                                 Delete Only This Task
                             </button>
@@ -374,7 +374,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setShowDeleteModal(false)}
-                                className="flex-1 bg-slate-100 dark:bg-white/5 text-primary-text py-3 rounded-xl font-semibold hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+                                className="flex-1 bg-gray-100 dark:bg-white/5 text-primary-text py-3 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-white/10 transition-all"
                             >
                                 Cancel
                             </button>

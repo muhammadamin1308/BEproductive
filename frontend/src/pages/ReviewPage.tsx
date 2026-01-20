@@ -121,10 +121,10 @@ export const ReviewPage = () => {
     <div className="max-w-4xl mx-auto px-4 py-4 md:py-8">
       <header className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-primary-text mb-4">Weekly Review</h1>
-        <div className="flex items-center justify-between bg-surface rounded-xl border border-slate-200 dark:border-white/10 p-3">
+        <div className="flex items-center justify-between bg-surface rounded-xl border border-gray-200 dark:border-white/10 p-3">
           <button
             onClick={fetchData}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors text-cta"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors text-cta"
             title="Refresh"
           >
             ↻
@@ -132,7 +132,7 @@ export const ReviewPage = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setWeekOffset(weekOffset - 1)}
-              className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors text-primary-text"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors text-primary-text"
             >
               ←
             </button>
@@ -142,7 +142,7 @@ export const ReviewPage = () => {
             <button
               onClick={() => setWeekOffset(weekOffset + 1)}
               disabled={weekOffset >= 0}
-              className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-primary-text"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-primary-text"
             >
               →
             </button>
@@ -198,30 +198,38 @@ export const ReviewPage = () => {
       </div>
 
       {/* Daily Progress Chart */}
-      <div className="bg-surface rounded-xl border border-slate-200 dark:border-white/10 shadow-soft p-4 md:p-6 mb-6 md:mb-8">
+      <div className="bg-surface rounded-xl border border-gray-200 dark:border-white/10 shadow-soft p-4 md:p-6 mb-6 md:mb-8">
         <h2 className="font-semibold text-primary-text mb-4 text-base md:text-lg">Daily Task Completion</h2>
-        <div className="flex items-end justify-between gap-1.5 md:gap-2 h-40 md:h-48">
+        <div className="flex items-end justify-between gap-2 md:gap-3 h-48 md:h-56">
           {weekDays.map((day) => {
             const dateStr = format(day, 'yyyy-MM-dd');
             const dayStats = stats?.dailyStats[dateStr] || { completed: 0, total: 0 };
             const percentage = dayStats.total > 0 ? (dayStats.completed / dayStats.total) * 100 : 0;
             const height = percentage > 0 ? Math.max(percentage, 5) : 0;
+            const isToday = dateStr === today;
 
             return (
-              <div key={dateStr} className="flex-1 flex flex-col items-center gap-2">
-                <div className="w-full bg-slate-100 dark:bg-white/5 rounded-t-lg relative" style={{ height: '120px' }}>
+              <div key={dateStr} className="flex-1 flex flex-col items-center gap-2 min-w-0">
+                <div className="w-full bg-gray-100 dark:bg-white/5 rounded-t-lg relative overflow-hidden" style={{ height: '140px' }}>
                   {height > 0 && (
                     <div
-                      className="absolute bottom-0 w-full bg-cta rounded-t-lg transition-all"
+                      className="absolute bottom-0 w-full bg-cta rounded-t-lg transition-all duration-300"
                       style={{ height: `${height}%` }}
                     />
                   )}
                 </div>
-                <div className="text-center">
-                  <div className="text-[10px] md:text-xs font-medium text-primary-text">
-                    {format(day, 'EEE')}{dateStr === today && ' (today)'}
+                <div className="text-center w-full">
+                  <div className={`text-xs font-medium whitespace-nowrap ${isToday ? 'text-cta' : 'text-primary-text'}`}>
+                    {isToday ? (
+                      <>
+                        <span className="md:hidden">Today</span>
+                        <span className="hidden md:inline">{format(day, 'EEE')} (today)</span>
+                      </>
+                    ) : (
+                      format(day, 'EEE')
+                    )}
                   </div>
-                  <div className="text-[10px] md:text-xs text-secondary-text">
+                  <div className="text-xs text-secondary-text mt-0.5">
                     {dayStats.completed}/{dayStats.total}
                   </div>
                 </div>
@@ -233,22 +241,22 @@ export const ReviewPage = () => {
 
       {/* Focus Session Analytics */}
       {stats && stats.totalSessions > 0 && (
-        <div className="bg-surface rounded-xl border border-slate-200 dark:border-white/10 shadow-soft p-6 mb-8">
+        <div className="bg-surface rounded-xl border border-gray-200 dark:border-white/10 shadow-soft p-6 mb-8">
           <h2 className="font-semibold text-primary-text mb-4">Focus Session Analytics</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-slate-50 dark:bg-white/5 rounded-lg">
+            <div className="text-center p-4 bg-gray-50 dark:bg-white/5 rounded-lg">
               <div className="text-2xl font-bold text-primary-text mb-1">
                 {stats.totalSessions}
               </div>
               <div className="text-sm text-secondary-text">Total Sessions</div>
             </div>
-            <div className="text-center p-4 bg-slate-50 dark:bg-white/5 rounded-lg">
+            <div className="text-center p-4 bg-gray-50 dark:bg-white/5 rounded-lg">
               <div className="text-2xl font-bold text-primary-text mb-1">
                 {Math.round((stats.totalFocusMinutes / stats.totalSessions) || 0)} min
               </div>
               <div className="text-sm text-secondary-text">Avg Session Length</div>
             </div>
-            <div className="text-center p-4 bg-slate-50 dark:bg-white/5 rounded-lg">
+            <div className="text-center p-4 bg-gray-50 dark:bg-white/5 rounded-lg">
               <div className="text-2xl font-bold text-primary-text mb-1">
                 {stats.interruptedSessions}
               </div>
@@ -259,7 +267,7 @@ export const ReviewPage = () => {
       )}
 
       {/* Weekly Reflection */}
-      <div className="bg-surface rounded-xl border border-slate-200 dark:border-white/10 shadow-soft p-6">
+      <div className="bg-surface rounded-xl border border-gray-200 dark:border-white/10 shadow-soft p-6">
         <h2 className="font-semibold text-primary-text mb-4">Weekly Reflection</h2>
         <form onSubmit={handleSaveReflection} className="space-y-4">
           <div>
@@ -269,7 +277,7 @@ export const ReviewPage = () => {
             <textarea
               value={formData.wentWell}
               onChange={(e) => setFormData({ ...formData, wentWell: e.target.value })}
-              className="w-full p-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/50 text-primary-text focus:ring-2 focus:ring-cta outline-none resize-none h-24 placeholder:text-secondary-text"
+              className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/50 text-primary-text focus:ring-2 focus:ring-cta outline-none resize-none h-24 placeholder:text-secondary-text"
               placeholder="I successfully completed..."
             />
           </div>
@@ -281,7 +289,7 @@ export const ReviewPage = () => {
             <textarea
               value={formData.accomplishments}
               onChange={(e) => setFormData({ ...formData, accomplishments: e.target.value })}
-              className="w-full p-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/50 text-primary-text focus:ring-2 focus:ring-cta outline-none resize-none h-24 placeholder:text-secondary-text"
+              className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/50 text-primary-text focus:ring-2 focus:ring-cta outline-none resize-none h-24 placeholder:text-secondary-text"
               placeholder="1. &#10;2. &#10;3. "
             />
           </div>
@@ -293,7 +301,7 @@ export const ReviewPage = () => {
             <textarea
               value={formData.toImprove}
               onChange={(e) => setFormData({ ...formData, toImprove: e.target.value })}
-              className="w-full p-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/50 text-primary-text focus:ring-2 focus:ring-cta outline-none resize-none h-24 placeholder:text-secondary-text"
+              className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/50 text-primary-text focus:ring-2 focus:ring-cta outline-none resize-none h-24 placeholder:text-secondary-text"
               placeholder="Next week I will..."
             />
           </div>
@@ -305,7 +313,7 @@ export const ReviewPage = () => {
             <textarea
               value={formData.challenges}
               onChange={(e) => setFormData({ ...formData, challenges: e.target.value })}
-              className="w-full p-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/50 text-primary-text focus:ring-2 focus:ring-cta outline-none resize-none h-24 placeholder:text-secondary-text"
+              className="w-full p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/50 text-primary-text focus:ring-2 focus:ring-cta outline-none resize-none h-24 placeholder:text-secondary-text"
               placeholder="I struggled with..."
             />
           </div>

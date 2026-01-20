@@ -116,7 +116,7 @@ export const GoalsPage = () => {
         <select
           value={selectedLevel}
           onChange={(e) => setSelectedLevel(e.target.value as Goal['level'])}
-          className="w-full px-4 py-3.5 bg-surface border-2 border-slate-200 dark:border-white/10 rounded-xl text-primary-text text-base font-semibold shadow-soft hover:shadow-md focus:outline-none focus:ring-2 focus:ring-cta focus:border-cta transition-all appearance-none cursor-pointer"
+          className="w-full px-4 py-3.5 bg-surface border-2 border-gray-200 dark:border-white/10 rounded-xl text-primary-text text-base font-semibold shadow-soft hover:shadow-md focus:outline-none focus:ring-2 focus:ring-cta focus:border-cta transition-all appearance-none cursor-pointer"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%2364748b' d='M8 11L3 6h10z'/%3E%3C/svg%3E")`,
             backgroundRepeat: 'no-repeat',
@@ -137,7 +137,7 @@ export const GoalsPage = () => {
           filteredGoals.map((goal) => (
             <div 
               key={goal.id}
-              className="bg-surface p-5 rounded-xl border border-slate-100 dark:border-white/5 shadow-soft hover:shadow-md transition-all group"
+              className="bg-surface p-5 rounded-xl border border-gray-100 dark:border-white/5 shadow-soft hover:shadow-md transition-all group"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -195,7 +195,7 @@ export const GoalsPage = () => {
                     type="text"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3 py-2 bg-background border border-slate-200 dark:border-white/10 rounded-lg text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
+                    className="w-full px-3 py-2 bg-background border border-gray-200 dark:border-white/10 rounded-lg text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
                     required
                   />
                 </div>
@@ -206,7 +206,7 @@ export const GoalsPage = () => {
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-3 py-2 bg-background border border-slate-200 dark:border-white/10 rounded-lg text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
+                    className="w-full px-3 py-2 bg-background border border-gray-200 dark:border-white/10 rounded-lg text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
                     rows={3}
                   />
                 </div>
@@ -217,7 +217,7 @@ export const GoalsPage = () => {
                   <select
                     value={formData.level}
                     onChange={(e) => setFormData({ ...formData, level: e.target.value as Goal['level'] })}
-                    className="w-full px-3 py-2 bg-background border border-slate-200 dark:border-white/10 rounded-lg text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
+                    className="w-full px-3 py-2 bg-background border border-gray-200 dark:border-white/10 rounded-lg text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
                   >
                     <option value="WEEK">Weekly</option>
                     <option value="MONTH">Monthly</option>
@@ -234,7 +234,7 @@ export const GoalsPage = () => {
                     setEditingGoal(null);
                     setFormData({ title: '', description: '', level: 'MONTH' });
                   }}
-                  className="flex-1 px-4 py-2 border border-slate-200 dark:border-white/10 rounded-lg text-primary-text hover:bg-background transition-colors"
+                  className="flex-1 px-4 py-2 border border-gray-200 dark:border-white/10 rounded-lg text-primary-text hover:bg-background transition-colors"
                 >
                   Cancel
                 </button>

@@ -39,12 +39,12 @@ export const LoginPage = () => {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 dark:bg-stone-900 p-4">
-            <div className="bg-white dark:bg-stone-800 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-stone-700 w-full max-w-md text-center">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-stone-900 p-4">
+            <div className="bg-white dark:bg-stone-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-stone-700 w-full max-w-md text-center">
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
-                    Focus App
+                    BeProductive
                 </h1>
-                <p className="text-slate-500 dark:text-stone-400 mb-8">Execute today, plan less.</p>
+                <p className="text-gray-500 dark:text-stone-400 mb-8">Execute today, plan less.</p>
 
                 {isOffline ? (
                     <div className="flex flex-col items-center gap-3 text-stone-500 dark:text-stone-400">
