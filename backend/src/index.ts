@@ -22,8 +22,9 @@ app.use(
       "http://localhost:4173",
       "https://beproductive.vercel.app",
       "https://beproductive.muhammadamin.tech",
-      "https://darling-peony-4e940f.netlify.app"
-    ],
+      "https://darling-peony-4e940f.netlify.app",
+      process.env.FRONTEND_URL
+    ].filter(Boolean) as string[],
     credentials: true,
   }),
 );
