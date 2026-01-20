@@ -21,6 +21,8 @@ app.use(
       "http://localhost:5173",
       "http://localhost:4173",
       "https://beproductive.vercel.app",
+      "https://beproductive.muhammadamin.tech",
+      "https://darling-peony-4e940f.netlify.app"
     ],
     credentials: true,
   }),
