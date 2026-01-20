@@ -35,17 +35,8 @@ export const TaskCard = ({ task }: TaskCardProps) => {
     const [editPomodorosTotal, setEditPomodorosTotal] = useState(task.pomodorosTotal);
     const [editStartTime, setEditStartTime] = useState(task.startTime || '');
     const [editEndTime, setEditEndTime] = useState(task.endTime || '');
-    const [isEditingRecurring, setIsEditingRecurring] = useState(!!task.recurringTaskId);
-    const [editRecurringPattern, setEditRecurringPattern] = useState<'DAILY' | 'WEEKDAYS' | 'CUSTOM'>('DAILY');
-    const [editSelectedDays, setEditSelectedDays] = useState<number[]>([]);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
-
-    const toggleEditDay = (day: number) => {
-        setEditSelectedDays(prev => 
-            prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
-        );
-    };
 
     const {
         attributes,
@@ -330,7 +321,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
                                     Edit
                                 </button>
                                 <button
-                                    onClick={(e) => {
+                                    onClick={() => {
                                         setShowDeleteModal(true);
                                         setIsMenuOpen(false);
                                     }}
