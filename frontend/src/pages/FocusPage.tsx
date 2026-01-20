@@ -1,4 +1,4 @@
-import { Play, Pause, RotateCcw } from 'lucide-react';
+import { Play, Pause, RotateCcw, SkipForward } from 'lucide-react';
 import { useFocusStore } from '../store/useFocusStore';
 
 export const FocusPage = () => {
@@ -6,9 +6,11 @@ export const FocusPage = () => {
         timeLeft,
         isActive,
         activeTask,
+        mode,
         startTimer,
         pauseTimer,
         resetTimer,
+        skipTimer,
     } = useFocusStore();
 
     // Timer is now managed globally by FocusTimerManager
@@ -38,7 +40,7 @@ export const FocusPage = () => {
                         {formatTime(timeLeft)}
                     </div>
                     <div className="absolute -bottom-3 px-4 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-sm font-medium rounded-full">
-                        Pomodoro
+                        {mode === 'POMODORO' ? 'Pomodoro' : mode === 'SHORT_BREAK' ? 'Short Break' : 'Long Break'}
                     </div>
                 </div>
 
@@ -58,15 +60,26 @@ export const FocusPage = () => {
                         {isActive ? "Pause Timer" : "Start Timer"}
                     </button>
 
-                    {!isActive && timeLeft !== 25 * 60 && (
-                        <button
-                            onClick={resetTimer}
-                            className="w-full py-3 px-6 text-secondary-text hover:text-primary-text hover:bg-slate-100 dark:hover:bg-white/5 font-medium rounded-xl transition-all flex items-center justify-center gap-2"
-                        >
-                            <RotateCcw className="w-4 h-4" />
-                            Reset
-                        </button>
-                    )}
+                    <div className="flex gap-3">
+                        {mode !== 'POMODORO' && (
+                            <button
+                                onClick={skipTimer}
+                                className="flex-1 py-3 px-6 text-secondary-text hover:text-primary-text hover:bg-slate-100 dark:hover:bg-white/5 font-medium rounded-xl transition-all flex items-center justify-center gap-2"
+                            >
+                                <SkipForward className="w-4 h-4" />
+                                Skip Break
+                            </button>
+                        )}
+                        {!isActive && timeLeft !== (mode === 'POMODORO' ? 25 * 60 : mode === 'SHORT_BREAK' ? 5 * 60 : 15 * 60) && (
+                            <button
+                                onClick={resetTimer}
+                                className="flex-1 py-3 px-6 text-secondary-text hover:text-primary-text hover:bg-slate-100 dark:hover:bg-white/5 font-medium rounded-xl transition-all flex items-center justify-center gap-2"
+                            >
+                                <RotateCcw className="w-4 h-4" />
+                                Reset
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

@@ -115,6 +115,7 @@ export const ReviewPage = () => {
 
   // Generate days for the week
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const today = format(new Date(), 'yyyy-MM-dd');
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-4 md:py-8">
@@ -218,7 +219,7 @@ export const ReviewPage = () => {
                 </div>
                 <div className="text-center">
                   <div className="text-[10px] md:text-xs font-medium text-primary-text">
-                    {format(day, 'EEE')}
+                    {format(day, 'EEE')}{dateStr === today && ' (today)'}
                   </div>
                   <div className="text-[10px] md:text-xs text-secondary-text">
                     {dayStats.completed}/{dayStats.total}

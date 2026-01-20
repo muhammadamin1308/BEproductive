@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Play, Check, MoreVertical, Trash2, Edit2, X, GripVertical } from 'lucide-react';
+import { Play, Check, MoreVertical, Trash2, Edit2, X, GripVertical, Repeat } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useFocusStore, Task } from '../store/useFocusStore';
 import { cn } from '../lib/utils';
@@ -7,6 +7,7 @@ import { api } from '../lib/axios';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Modal } from './Modal';
 
 interface TaskCardProps {
     task: {
@@ -17,6 +18,9 @@ interface TaskCardProps {
         estimatedMinutes?: number;
         pomodorosTotal: number;
         pomodorosCompleted: number;
+        recurringTaskId?: string | null;
+        startTime?: string | null;
+        endTime?: string | null;
     };
 }
 
@@ -29,7 +33,19 @@ export const TaskCard = ({ task }: TaskCardProps) => {
     const [editTitle, setEditTitle] = useState(task.title);
     const [editDesc, setEditDesc] = useState(task.description || '');
     const [editPomodorosTotal, setEditPomodorosTotal] = useState(task.pomodorosTotal);
+    const [editStartTime, setEditStartTime] = useState(task.startTime || '');
+    const [editEndTime, setEditEndTime] = useState(task.endTime || '');
+    const [isEditingRecurring, setIsEditingRecurring] = useState(!!task.recurringTaskId);
+    const [editRecurringPattern, setEditRecurringPattern] = useState<'DAILY' | 'WEEKDAYS' | 'CUSTOM'>('DAILY');
+    const [editSelectedDays, setEditSelectedDays] = useState<number[]>([]);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
+
+    const toggleEditDay = (day: number) => {
+        setEditSelectedDays(prev => 
+            prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+        );
+    };
 
     const {
         attributes,
@@ -58,8 +74,14 @@ export const TaskCard = ({ task }: TaskCardProps) => {
     }, []);
 
     const deleteTaskMutation = useMutation({
-        mutationFn: async () => {
-            await api.delete(`/tasks/${task.id}`);
+        mutationFn: async (deleteAll?: boolean) => {
+            if (deleteAll && task.recurringTaskId) {
+                // Delete the recurring task (will cascade delete all instances)
+                await api.delete(`/recurring-tasks/${task.recurringTaskId}`);
+            } else {
+                // Delete just this instance
+                await api.delete(`/tasks/${task.id}`);
+            }
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -67,7 +89,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
     });
 
     const updateTaskMutation = useMutation({
-        mutationFn: async (data: { title: string; description: string; pomodorosTotal: number }) => {
+        mutationFn: async (data: { title: string; description: string; pomodorosTotal: number; startTime?: string; endTime?: string }) => {
             await api.patch(`/tasks/${task.id}`, data);
         },
         onSuccess: () => {
@@ -106,7 +128,13 @@ export const TaskCard = ({ task }: TaskCardProps) => {
             <div className="bg-surface p-5 rounded-2xl border border-indigo-200 dark:border-indigo-900/50 shadow-md">
                 <form onSubmit={(e) => {
                     e.preventDefault();
-                    updateTaskMutation.mutate({ title: editTitle, description: editDesc, pomodorosTotal: editPomodorosTotal });
+                    updateTaskMutation.mutate({ 
+                        title: editTitle, 
+                        description: editDesc, 
+                        pomodorosTotal: editPomodorosTotal,
+                        startTime: editStartTime || undefined,
+                        endTime: editEndTime || undefined
+                    });
                 }}>
                     <input
                         type="text"
@@ -121,6 +149,28 @@ export const TaskCard = ({ task }: TaskCardProps) => {
                         placeholder="Add a description..."
                         className="w-full bg-slate-50 dark:bg-black/20 rounded-lg p-3 text-sm text-secondary-text outline-none resize-none h-20 mb-3"
                     />
+
+                    {/* Time Fields */}
+                    <div className="flex items-center gap-3 mb-4 bg-slate-50 dark:bg-white/5 p-3 rounded-lg">
+                        <div className="flex-1">
+                            <label className="block text-xs font-medium text-secondary-text mb-1.5">Start Time</label>
+                            <input
+                                type="time"
+                                value={editStartTime}
+                                onChange={(e) => setEditStartTime(e.target.value)}
+                                className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
+                            />
+                        </div>
+                        <div className="flex-1">
+                            <label className="block text-xs font-medium text-secondary-text mb-1.5">End Time</label>
+                            <input
+                                type="time"
+                                value={editEndTime}
+                                onChange={(e) => setEditEndTime(e.target.value)}
+                                className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
+                            />
+                        </div>
+                    </div>
 
                     {/* Pomodoro Editor */}
                     <div className="flex items-center gap-2 mb-4">
@@ -138,6 +188,22 @@ export const TaskCard = ({ task }: TaskCardProps) => {
                             ))}
                         </div>
                     </div>
+
+                    {/* Recurring Task Options */}
+                    {task.recurringTaskId && (
+                        <div className="mb-4">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Repeat className="w-4 h-4 text-cta" />
+                                <span className="text-sm font-medium text-primary-text">Recurring Task</span>
+                            </div>
+                            <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-900/50">
+                                <p className="text-xs text-amber-800 dark:text-amber-200">
+                                    Note: Changes to this task will only affect this instance. To edit the recurring pattern, delete and recreate the recurring task.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="flex justify-end gap-2">
                         <button
                             type="button"
@@ -265,19 +331,75 @@ export const TaskCard = ({ task }: TaskCardProps) => {
                                 </button>
                                 <button
                                     onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (confirm('Delete task?')) deleteTaskMutation.mutate();
+                                        setShowDeleteModal(true);
+                                        setIsMenuOpen(false);
                                     }}
                                     className="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
                                 >
                                     <Trash2 className="w-3.5 h-3.5" />
-                                    Delete
+                                    Delete{task.recurringTaskId ? ' (recurring)' : ''}
                                 </button>
                             </div>
                         )}
                     </div>
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="Delete Task">
+                {task.recurringTaskId ? (
+                    <>
+                        <p className="text-secondary-text mb-6">This is a recurring task. What would you like to delete?</p>
+                        <div className="flex flex-col gap-3">
+                            <button
+                                onClick={() => {
+                                    deleteTaskMutation.mutate(false);
+                                    setShowDeleteModal(false);
+                                }}
+                                className="w-full bg-slate-100 dark:bg-white/5 text-primary-text py-3 rounded-xl font-semibold hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+                            >
+                                Delete Only This Task
+                            </button>
+                            <button
+                                onClick={() => {
+                                    deleteTaskMutation.mutate(true);
+                                    setShowDeleteModal(false);
+                                }}
+                                className="w-full bg-red-500 text-white py-3 rounded-xl font-semibold hover:bg-red-600 transition-all"
+                            >
+                                Delete All Recurring Tasks
+                            </button>
+                            <button
+                                onClick={() => setShowDeleteModal(false)}
+                                className="w-full text-secondary-text py-2 hover:text-primary-text transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <p className="text-secondary-text mb-6">Are you sure you want to delete this task?</p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowDeleteModal(false)}
+                                className="flex-1 bg-slate-100 dark:bg-white/5 text-primary-text py-3 rounded-xl font-semibold hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    deleteTaskMutation.mutate(false);
+                                    setShowDeleteModal(false);
+                                }}
+                                className="flex-1 bg-red-500 text-white py-3 rounded-xl font-semibold hover:bg-red-600 transition-all"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </>
+                )}
+            </Modal>
         </div>
     );
 };

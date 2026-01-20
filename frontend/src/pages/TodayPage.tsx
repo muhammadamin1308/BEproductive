@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Play, Clock } from 'lucide-react';
+import { Play, Clock, Repeat } from 'lucide-react';
 import { TaskCard } from '../components/TaskCard';
 import { useAuthStore } from '../store/useAuthStore';
 import { format } from 'date-fns';
 import { api } from '../lib/axios';
 import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
+import { Modal } from '../components/Modal';
 
 const getTodayDate = () => new Date().toISOString().split('T')[0];
 
@@ -18,6 +19,10 @@ export const TodayPage = () => {
     const [showAddTaskForm, setShowAddTaskForm] = useState(false);
     const [startTime, setStartTime] = useState('');
     const [endTime, setEndTime] = useState('');
+    const [isRecurring, setIsRecurring] = useState(false);
+    const [recurringPattern, setRecurringPattern] = useState<'DAILY' | 'WEEKDAYS' | 'CUSTOM'>('DAILY');
+    const [selectedDays, setSelectedDays] = useState<number[]>([]);
+    const [showRecurringModal, setShowRecurringModal] = useState(false);
     useAuthStore((state) => state.user);
     const queryClient = useQueryClient();
     const todayDate = getTodayDate();
@@ -32,25 +37,52 @@ export const TodayPage = () => {
     });
 
     const createTaskMutation = useMutation({
-        mutationFn: async ({ title, description, pomodorosTotal, startTime, endTime }: { title: string; description: string; pomodorosTotal: number; startTime?: string; endTime?: string }) => {
-            await api.post('/tasks', {
-                title,
-                date: todayDate,
-                description: description || '',
-                pomodorosTotal: pomodorosTotal,
-                startTime: startTime || null,
-                endTime: endTime || null,
-            });
+        mutationFn: async ({ title, description, pomodorosTotal, startTime, endTime, isRecurring, recurringPattern, selectedDays }: { title: string; description: string; pomodorosTotal: number; startTime?: string; endTime?: string; isRecurring?: boolean; recurringPattern?: string; selectedDays?: number[] }) => {
+            if (isRecurring) {
+                let pattern = recurringPattern || 'DAILY';
+                let daysOfWeek = null;
+                
+                if (pattern === 'CUSTOM' && selectedDays && selectedDays.length > 0) {
+                    daysOfWeek = JSON.stringify(selectedDays);
+                }
+                
+                // Create recurring task
+                await api.post('/recurring-tasks', {
+                    title,
+                    description: description || '',
+                    recurrencePattern: pattern,
+                    daysOfWeek,
+                    startTime: startTime || null,
+                    endTime: endTime || null,
+                    pomodorosTotal: pomodorosTotal,
+                    priority: 1,
+                    isActive: true,
+                });
+            } else {
+                // Create one-time task
+                await api.post('/tasks', {
+                    title,
+                    date: todayDate,
+                    description: description || '',
+                    pomodorosTotal: pomodorosTotal,
+                    startTime: startTime || null,
+                    endTime: endTime || null,
+                });
+            }
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks', todayDate] });
             setNewTaskTitle('');
             setNewTaskDescription('');
-            setPomodoros(2);
+            setPomodoros(1);
             setStartTime('');
             setEndTime('');
             setShowTimeFields(false);
             setShowAddTaskForm(false);
+            setIsRecurring(false);
+            setRecurringPattern('DAILY');
+            setSelectedDays([]);
+            setShowRecurringModal(false);
         },
     });
 
@@ -63,13 +95,26 @@ export const TodayPage = () => {
     const handleAddTask = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newTaskTitle.trim()) return;
+        if (isRecurring && recurringPattern === 'CUSTOM' && selectedDays.length === 0) {
+            setShowRecurringModal(true);
+            return;
+        }
         createTaskMutation.mutate({ 
             title: newTaskTitle,
             description: newTaskDescription,
             pomodorosTotal: pomodoros,
             startTime: startTime || undefined,
             endTime: endTime || undefined,
+            isRecurring,
+            recurringPattern,
+            selectedDays,
         });
+    };
+
+    const toggleDay = (day: number) => {
+        setSelectedDays(prev => 
+            prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+        );
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
@@ -214,6 +259,93 @@ export const TodayPage = () => {
                                                     Total: {pomodoros * 25} min + breaks
                                                 </div>
                                             </div>
+
+                                            {/* Recurring Task Options */}
+                                            <div>
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isRecurring}
+                                                        onChange={(e) => setIsRecurring(e.target.checked)}
+                                                        className="w-4 h-4 rounded border-slate-300 text-cta focus:ring-cta"
+                                                    />
+                                                    <span className="text-sm font-medium text-primary-text flex items-center gap-1">
+                                                        <Repeat className="w-4 h-4" />
+                                                        Repeat this task
+                                                    </span>
+                                                </label>
+                                                
+                                                {isRecurring && (
+                                                    <div className="mt-3 p-3 bg-slate-50 dark:bg-white/5 rounded-lg space-y-3">
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setRecurringPattern('DAILY');
+                                                                    setSelectedDays([]);
+                                                                }}
+                                                                className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                                                                    recurringPattern === 'DAILY'
+                                                                        ? 'bg-cta text-white shadow-sm'
+                                                                        : 'bg-white dark:bg-slate-800 text-secondary-text hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10'
+                                                                }`}
+                                                            >
+                                                                Daily
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setRecurringPattern('WEEKDAYS');
+                                                                    setSelectedDays([]);
+                                                                }}
+                                                                className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                                                                    recurringPattern === 'WEEKDAYS'
+                                                                        ? 'bg-cta text-white shadow-sm'
+                                                                        : 'bg-white dark:bg-slate-800 text-secondary-text hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10'
+                                                                }`}
+                                                            >
+                                                                Weekdays
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setRecurringPattern('CUSTOM');
+                                                                }}
+                                                                className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                                                                    recurringPattern === 'CUSTOM'
+                                                                        ? 'bg-cta text-white shadow-sm'
+                                                                        : 'bg-white dark:bg-slate-800 text-secondary-text hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10'
+                                                                }`}
+                                                            >
+                                                                Custom
+                                                            </button>
+                                                        </div>
+                                                        
+                                                        {recurringPattern === 'CUSTOM' && (
+                                                            <div>
+                                                                <label className="block text-xs font-medium text-secondary-text mb-2">Select days:</label>
+                                                                <div className="flex gap-1.5">
+                                                                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, idx) => (
+                                                                        <button
+                                                                            key={idx}
+                                                                            type="button"
+                                                                            onClick={() => toggleDay(idx)}
+                                                                            className={`w-9 h-9 rounded-full text-xs font-bold transition-all ${
+                                                                                selectedDays.includes(idx)
+                                                                                    ? 'bg-cta text-white shadow-sm'
+                                                                                    : 'bg-white dark:bg-slate-800 text-secondary-text hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10'
+                                                                            }`}
+                                                                            title={['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][idx]}
+                                                                        >
+                                                                            {day}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
                                             
                                             <div className="flex gap-2 pt-2">
                                                 <button
@@ -235,6 +367,9 @@ export const TodayPage = () => {
                                             setEndTime('');
                                             setShowTimeFields(false);
                                             setPomodoros(1);
+                                            setIsRecurring(false);
+                                            setRecurringPattern('DAILY');
+                                            setSelectedDays([]);
                                         }}
                                         className="mt-3 w-full text-sm text-secondary-text hover:text-red-600 transition-colors"
                                     >
@@ -254,6 +389,17 @@ export const TodayPage = () => {
                         </div>
                     </SortableContext>
                 </DndContext>
+
+                {/* Recurring Days Selection Modal */}
+                <Modal isOpen={showRecurringModal} onClose={() => setShowRecurringModal(false)} title="Select Days">
+                    <p className="text-secondary-text mb-4">Please select at least one day for your recurring task.</p>
+                    <button
+                        onClick={() => setShowRecurringModal(false)}
+                        className="w-full bg-cta text-white py-3 rounded-xl font-semibold hover:brightness-110 transition-all"
+                    >
+                        OK
+                    </button>
+                </Modal>
             </div>
         </div>
     );
