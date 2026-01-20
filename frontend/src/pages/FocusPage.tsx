@@ -67,7 +67,7 @@ export const FocusPage = () => {
                 <div className="flex flex-col gap-3">
                     <button
                         onClick={handleToggleTimer}
-                        disabled={activeTask && activeTask.pomodorosCompleted >= activeTask.pomodorosTotal && mode === 'POMODORO'}
+                        disabled={!!(activeTask && activeTask.pomodorosCompleted >= activeTask.pomodorosTotal && mode === 'POMODORO')}
                         className="w-full py-4 px-6 bg-cta hover:brightness-110 text-white font-bold text-lg rounded-2xl transition-all shadow-lg shadow-cta/20 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isActive ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current" />}

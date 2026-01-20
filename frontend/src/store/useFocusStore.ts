@@ -24,7 +24,7 @@ interface FocusState {
   sessionsCompleted: number; // To track when to check long break
 
   // Actions
-  setActiveTask: (task: Task) => void;
+  setActiveTask: (task: Task | null) => void;
   startTimer: () => void;
   pauseTimer: () => void;
   resetTimer: () => void;
