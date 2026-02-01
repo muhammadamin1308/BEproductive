@@ -8,7 +8,7 @@ export const Header = () => {
     const { theme, toggleTheme } = useThemeStore();
 
     const navItems = [
-        { to: '/', icon: 'dashboard', label: 'TODAY' },
+        { to: '/dashboard', icon: 'dashboard', label: 'TODAY' },
         { to: '/focus', icon: 'timer', label: 'FOCUS' },
         { to: '/review', icon: 'rate_review', label: 'REVIEW' },
         { to: '/goals', icon: 'track_changes', label: 'GOALS' },
@@ -36,8 +36,8 @@ export const Header = () => {
                             key={to}
                             to={to}
                             className={`flex items-center gap-2 transition-colors ${isActive
-                                    ? 'font-bold text-primary border-b-2 border-primary pb-0.5'
-                                    : 'text-text-muted-light dark:text-text-muted-dark hover:text-text-main-light dark:hover:text-text-main-dark'
+                                ? 'font-bold text-primary border-b-2 border-primary pb-0.5'
+                                : 'text-text-muted-light dark:text-text-muted-dark hover:text-text-main-light dark:hover:text-text-main-dark'
                                 }`}
                         >
                             <span className="material-icons text-base">{icon}</span>
