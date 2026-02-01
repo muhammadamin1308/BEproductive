@@ -15,7 +15,6 @@ export const GoalsPage = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
-  const [selectedLevel, setSelectedLevel] = useState<Goal['level']>('MONTH');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -57,7 +56,7 @@ export const GoalsPage = () => {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this goal?')) return;
-    
+
     try {
       await api.delete(`/goals/${id}`);
       fetchGoals();
@@ -76,148 +75,235 @@ export const GoalsPage = () => {
     setShowModal(true);
   };
 
-  const handleNewGoal = () => {
+  const handleNewGoal = (level?: Goal['level']) => {
     setEditingGoal(null);
-    setFormData({ title: '', description: '', level: selectedLevel });
+    setFormData({ title: '', description: '', level: level || 'MONTH' });
     setShowModal(true);
   };
 
-  const levelLabels = {
-    YEAR: 'Yearly',
-    QUARTER: 'Quarterly',
-    MONTH: 'Monthly',
-    WEEK: 'Weekly',
-  };
-
-  const filteredGoals = goals.filter(g => g.level === selectedLevel);
+  const yearlyGoals = goals.filter((g) => g.level === 'YEAR');
+  const monthlyGoals = goals.filter((g) => g.level === 'MONTH');
+  const activeGoals = goals.length;
+  const completionRate = 85; // Placeholder - would need backend support
 
   if (loading) {
     return (
-      <div className="max-w-md mx-auto px-4 py-8">
-        <div className="text-center text-secondary-text">Loading goals...</div>
+      <div className="p-12 max-w-7xl mx-auto">
+        <div className="text-text-muted-light dark:text-text-muted-dark flex items-center gap-2">
+          <span className="text-primary">{'>'}</span>
+          LOADING_GOALS...
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-md mx-auto px-4 py-8">
-      <header className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-primary-text">My Goals</h1>
-        <button 
-          onClick={handleNewGoal}
-          className="text-cta font-medium text-sm hover:opacity-80 transition-opacity"
-        >
-          + New Goal
-        </button>
+    <div className="p-6 md:p-12 max-w-7xl mx-auto w-full">
+      {/* Header */}
+      <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <h1 className="text-4xl md:text-5xl font-bold mb-2 tracking-tighter uppercase text-text-main-light dark:text-text-main-dark">
+            My Goals
+          </h1>
+          <p className="text-text-muted-light dark:text-text-muted-dark text-sm flex items-center">
+            <span className="mr-2 text-primary">{'>'}</span>
+            Track your progress and achieve your dreams.
+          </p>
+        </div>
+        <div className="text-right text-[10px] leading-tight font-bold tracking-wider text-text-muted-light dark:text-text-muted-dark">
+          <div className="mb-1">
+            SYSTEM STATUS: <span className="text-primary">ONLINE</span>
+          </div>
+          <div>LAST SYNC: {new Date().toLocaleTimeString()}</div>
+        </div>
       </header>
 
-      {/* Dropdown to select level */}
-      <div className="mb-6">
-        <select
-          value={selectedLevel}
-          onChange={(e) => setSelectedLevel(e.target.value as Goal['level'])}
-          className="w-full px-4 py-3.5 bg-surface border-2 border-gray-200 dark:border-white/10 rounded-xl text-primary-text text-base font-semibold shadow-soft hover:shadow-md focus:outline-none focus:ring-2 focus:ring-cta focus:border-cta transition-all appearance-none cursor-pointer"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%2364748b' d='M8 11L3 6h10z'/%3E%3C/svg%3E")`,
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'right 1rem center',
-            paddingRight: '2.5rem'
-          }}
-        >
-          <option value="YEAR">Yearly Goals</option>
-          <option value="QUARTER">Quarterly Goals</option>
-          <option value="MONTH">Monthly Goals</option>
-          <option value="WEEK">Weekly Goals</option>
-        </select>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-border-light dark:border-border-dark mb-12 bg-surface-light dark:bg-surface-dark">
+        <div className="p-6 md:p-8 border-b md:border-b-0 md:border-r border-border-light dark:border-border-dark relative group">
+          <div className="flex justify-between items-start mb-4">
+            <span className="text-[10px] uppercase tracking-[0.2em] text-text-muted-light dark:text-text-muted-dark font-bold">
+              Active Goals
+            </span>
+            <span className="material-icons text-text-muted-light dark:text-text-muted-dark group-hover:text-primary transition-colors text-lg">
+              flag
+            </span>
+          </div>
+          <div className="text-5xl font-bold text-text-main-light dark:text-text-main-dark">
+            {activeGoals}
+          </div>
+        </div>
+        <div className="p-6 md:p-8 border-b md:border-b-0 md:border-r border-border-light dark:border-border-dark relative group">
+          <div className="flex justify-between items-start mb-4">
+            <span className="text-[10px] uppercase tracking-[0.2em] text-text-muted-light dark:text-text-muted-dark font-bold">
+              Completion Rate
+            </span>
+            <span className="material-icons text-text-muted-light dark:text-text-muted-dark group-hover:text-primary transition-colors text-lg">
+              analytics
+            </span>
+          </div>
+          <div className="text-5xl font-bold text-primary">{completionRate}%</div>
+        </div>
+        <div className="p-6 md:p-8 relative group">
+          <div className="flex justify-between items-start mb-4">
+            <span className="text-[10px] uppercase tracking-[0.2em] text-text-muted-light dark:text-text-muted-dark font-bold">
+              Day Streak
+            </span>
+            <span className="material-icons text-text-muted-light dark:text-text-muted-dark group-hover:text-primary transition-colors text-lg">
+              bolt
+            </span>
+          </div>
+          <div className="text-5xl font-bold text-text-main-light dark:text-text-main-dark">
+            5
+          </div>
+        </div>
       </div>
 
-      {/* Display goals for selected level */}
-      <div className="space-y-3">
-        {filteredGoals.length > 0 ? (
-          filteredGoals.map((goal) => (
-            <div 
+      {/* Yearly Goals Section */}
+      <section className="mb-12">
+        <div className="flex items-center justify-between mb-6 border-b border-border-light dark:border-border-dark pb-2">
+          <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 text-text-main-light dark:text-text-main-dark">
+            <span className="material-icons text-base">calendar_today</span>
+            Yearly Goals
+          </h2>
+          <button
+            onClick={() => handleNewGoal('YEAR')}
+            className="text-[10px] font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark hover:text-primary transition-colors"
+          >
+            + Add
+          </button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {yearlyGoals.map((goal, idx) => (
+            <GoalCard
               key={goal.id}
-              className="bg-surface p-5 rounded-xl border border-gray-100 dark:border-white/5 shadow-soft hover:shadow-md transition-all group"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h2 className="font-semibold text-primary-text text-lg">
-                    {goal.title}
-                  </h2>
-                  {goal.description && (
-                    <p className="text-sm text-secondary-text mt-2">{goal.description}</p>
-                  )}
-                </div>
-                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity ml-4">
-                  <button
-                    onClick={() => handleEdit(goal)}
-                    className="text-xs text-cta hover:underline font-medium px-2 py-1"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(goal.id)}
-                    className="text-xs text-red-500 hover:underline font-medium px-2 py-1"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
+              goal={goal}
+              index={idx + 1}
+              onEdit={() => handleEdit(goal)}
+              onDelete={() => handleDelete(goal.id)}
+            />
+          ))}
+          {yearlyGoals.length === 0 && (
+            <div className="col-span-2 bg-surface-light dark:bg-surface-dark border border-dashed border-border-light dark:border-border-dark p-8 text-center">
+              <p className="text-text-muted-light dark:text-text-muted-dark text-sm">
+                No yearly goals yet.{' '}
+                <button
+                  onClick={() => handleNewGoal('YEAR')}
+                  className="text-primary hover:underline"
+                >
+                  Create one
+                </button>
+              </p>
             </div>
-          ))
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-secondary-text mb-4">No {levelLabels[selectedLevel].toLowerCase()} goals yet</p>
-            <button
-              onClick={handleNewGoal}
-              className="text-cta hover:opacity-80 transition-opacity"
-            >
-              Create your first {levelLabels[selectedLevel].toLowerCase()} goal
-            </button>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </section>
+
+      {/* Monthly Focus Section */}
+      <section className="mb-12">
+        <div className="flex items-center justify-between mb-6 border-b border-border-light dark:border-border-dark pb-2">
+          <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 text-text-main-light dark:text-text-main-dark">
+            <span className="material-icons text-base">schedule</span>
+            Monthly Focus
+          </h2>
+          <button
+            onClick={() => handleNewGoal('MONTH')}
+            className="text-[10px] font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark hover:text-primary transition-colors"
+          >
+            + Add
+          </button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {monthlyGoals.map((goal, idx) => (
+            <GoalCard
+              key={goal.id}
+              goal={goal}
+              index={idx + 1}
+              onEdit={() => handleEdit(goal)}
+              onDelete={() => handleDelete(goal.id)}
+            />
+          ))}
+          {monthlyGoals.length === 0 && (
+            <div className="col-span-2 bg-surface-light dark:bg-surface-dark border border-dashed border-border-light dark:border-border-dark p-8 text-center">
+              <p className="text-text-muted-light dark:text-text-muted-dark text-sm">
+                No monthly goals yet.{' '}
+                <button
+                  onClick={() => handleNewGoal('MONTH')}
+                  className="text-primary hover:underline"
+                >
+                  Create one
+                </button>
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Create New Goal CTA */}
+      <section
+        onClick={() => handleNewGoal()}
+        className="border border-dashed border-text-muted-light dark:border-text-muted-dark p-12 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors group"
+      >
+        <span className="material-icons text-3xl mb-4 text-text-muted-light dark:text-text-muted-dark group-hover:text-primary transition-colors">
+          add_task
+        </span>
+        <h3 className="text-lg font-bold uppercase tracking-[0.2em] mb-2 text-text-main-light dark:text-text-main-dark">
+          Create A New Goal
+        </h3>
+        <p className="text-[10px] font-bold text-text-muted-light dark:text-text-muted-dark uppercase tracking-wider">
+          Define your next milestone
+        </p>
+      </section>
 
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-surface rounded-2xl max-w-md w-full p-6 shadow-xl">
-            <h2 className="text-xl font-bold text-primary-text mb-4">
+          <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark max-w-md w-full p-6 shadow-xl">
+            <h2 className="text-xl font-bold text-text-main-light dark:text-text-main-dark mb-4 uppercase tracking-wide">
               {editingGoal ? 'Edit Goal' : 'New Goal'}
             </h2>
             <form onSubmit={handleSubmit}>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-primary-text mb-2">
+                  <label className="block text-xs font-bold uppercase text-text-muted-light dark:text-text-muted-dark mb-2">
                     Title
                   </label>
                   <input
                     type="text"
                     value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3 py-2 bg-background border border-gray-200 dark:border-white/10 rounded-lg text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
+                    onChange={(e) =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
+                    className="w-full px-3 py-2 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark focus:outline-none focus:border-primary"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-primary-text mb-2">
+                  <label className="block text-xs font-bold uppercase text-text-muted-light dark:text-text-muted-dark mb-2">
                     Description (optional)
                   </label>
                   <textarea
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-3 py-2 bg-background border border-gray-200 dark:border-white/10 rounded-lg text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
+                    className="w-full px-3 py-2 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark focus:outline-none focus:border-primary resize-none"
                     rows={3}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-primary-text mb-2">
+                  <label className="block text-xs font-bold uppercase text-text-muted-light dark:text-text-muted-dark mb-2">
                     Level
                   </label>
                   <select
                     value={formData.level}
-                    onChange={(e) => setFormData({ ...formData, level: e.target.value as Goal['level'] })}
-                    className="w-full px-3 py-2 bg-background border border-gray-200 dark:border-white/10 rounded-lg text-primary-text focus:outline-none focus:ring-2 focus:ring-cta"
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        level: e.target.value as Goal['level'],
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark focus:outline-none focus:border-primary"
                   >
                     <option value="WEEK">Weekly</option>
                     <option value="MONTH">Monthly</option>
@@ -234,13 +320,13 @@ export const GoalsPage = () => {
                     setEditingGoal(null);
                     setFormData({ title: '', description: '', level: 'MONTH' });
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-200 dark:border-white/10 rounded-lg text-primary-text hover:bg-background transition-colors"
+                  className="flex-1 px-4 py-2 border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark hover:bg-background-light dark:hover:bg-background-dark transition-colors uppercase text-sm font-bold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-cta text-white rounded-lg hover:opacity-90 transition-opacity"
+                  className="flex-1 px-4 py-2 bg-primary text-black uppercase text-sm font-bold hover:opacity-90 transition-opacity"
                 >
                   {editingGoal ? 'Save' : 'Create'}
                 </button>
@@ -249,6 +335,75 @@ export const GoalsPage = () => {
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+// Goal Card Component
+const GoalCard = ({
+  goal,
+  index,
+  onEdit,
+  onDelete,
+}: {
+  goal: Goal;
+  index: number;
+  onEdit: () => void;
+  onDelete: () => void;
+}) => {
+  const categoryLabels: { [key: string]: string } = {
+    YEAR: 'Personal',
+    QUARTER: 'Career',
+    MONTH: 'Health',
+    WEEK: 'Skill',
+  };
+
+  return (
+    <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark p-6 hover:border-primary transition-colors group">
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex flex-col gap-2">
+          <span className="text-[10px] font-bold text-text-muted-light dark:text-text-muted-dark">
+            ID: {String(index).padStart(2, '0')}
+          </span>
+          <span className="inline-block bg-text-main-light dark:bg-white text-white dark:text-black text-[10px] px-1.5 py-0.5 font-bold uppercase w-fit">
+            {categoryLabels[goal.level]}
+          </span>
+        </div>
+        <div className="relative">
+          <button
+            onClick={onEdit}
+            className="text-text-muted-light dark:text-text-muted-dark hover:text-primary p-1"
+          >
+            <span className="material-icons text-sm">edit</span>
+          </button>
+          <button
+            onClick={onDelete}
+            className="text-text-muted-light dark:text-text-muted-dark hover:text-red-500 p-1"
+          >
+            <span className="material-icons text-sm">delete</span>
+          </button>
+        </div>
+      </div>
+      <h3 className="text-xl font-bold mb-2 text-text-main-light dark:text-text-main-dark">
+        {goal.title}
+      </h3>
+      {goal.description && (
+        <p className="text-xs text-text-muted-light dark:text-text-muted-dark mb-8">
+          {goal.description}
+        </p>
+      )}
+      {/* Placeholder progress - would need backend support */}
+      <div className="flex justify-between items-end text-[10px] font-bold mb-2 uppercase tracking-wider">
+        <span className="text-text-muted-light dark:text-text-muted-dark">Progress</span>
+        <div>
+          <span className="text-lg text-text-main-light dark:text-text-main-dark">0</span>{' '}
+          <span className="text-text-muted-light dark:text-text-muted-dark">/ 100%</span>
+        </div>
+      </div>
+      <div className="w-full bg-border-light dark:bg-border-dark h-1.5 relative">
+        <div className="absolute top-0 left-0 h-full bg-primary" style={{ width: '0%' }}></div>
+      </div>
+      <div className="text-right mt-1 text-[10px] font-bold text-primary">0%</div>
     </div>
   );
 };

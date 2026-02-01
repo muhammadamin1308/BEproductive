@@ -1,4 +1,3 @@
-import { X } from 'lucide-react';
 import { useEffect } from 'react';
 
 interface ModalProps {
@@ -24,18 +23,20 @@ export const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div 
+            <div
                 className="absolute inset-0 bg-black/50 backdrop-blur-sm"
                 onClick={onClose}
             />
-            <div className="relative bg-surface rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 max-w-md w-full max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
-                <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-white/10">
-                    <h2 className="text-xl font-bold text-primary-text">{title}</h2>
+            <div className="relative bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between p-6 border-b border-border-light dark:border-border-dark">
+                    <h2 className="text-lg font-bold text-text-main-light dark:text-text-main-dark uppercase tracking-wide">
+                        {title}
+                    </h2>
                     <button
                         onClick={onClose}
-                        className="p-2 text-secondary-text hover:text-primary-text hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+                        className="p-2 text-text-muted-light dark:text-text-muted-dark hover:text-text-main-light dark:hover:text-text-main-dark hover:bg-background-light dark:hover:bg-background-dark transition-colors"
                     >
-                        <X className="w-5 h-5" />
+                        <span className="material-icons">close</span>
                     </button>
                 </div>
                 <div className="p-6">

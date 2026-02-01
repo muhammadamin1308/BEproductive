@@ -1,34 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'JetBrains Mono', monospace;
 
-  /* Light Theme (Default) */
+  /* Light Theme (Default) - Command Center Style */
   --color-primary-bg: #F8F9FA;
-  --color-primary-text: #2D3436;
-  --color-secondary-text: #636E72;
-  --color-secondary-accent: #E2E2E2;
+  --color-primary-text: #121212;
+  --color-secondary-text: #666666;
+  --color-secondary-accent: #E0E0E0;
   --color-surface: #FFFFFF;
-  --color-cta: #375a64;
+  --color-cta: #00E676;
+  --color-border: #E0E0E0;
 }
 
 /* Target html.dark specifically */
 html.dark {
-  /* Dark Theme */
+  /* Dark Theme - Command Center Style */
   --color-primary-bg: #121212;
-  /* Deepest Gray/Black */
-  --color-primary-text: #E2E2E2;
-  /* Soft White */
-  --color-secondary-text: #A1A1AA;
-  /* Muted Gray */
-  --color-secondary-accent: #27272A;
-  /* Dark Accent */
+  --color-primary-text: #E0E0E0;
+  --color-secondary-text: #888888;
+  --color-secondary-accent: #333333;
   --color-surface: #1E1E1E;
-  /* Slightly Lighter Gray Card */
-  --color-cta: #4A7A85;
-  /* Slightly lighter Teal */
+  --color-cta: #00E676;
+  --color-border: #333333;
 }
 
 * {
@@ -37,7 +35,8 @@ html.dark {
   padding: 0;
 }
 
-html, body {
+html,
+body {
   height: 100%;
   width: 100%;
   overflow-x: hidden;
@@ -46,10 +45,79 @@ html, body {
 body {
   background-color: var(--color-primary-bg);
   color: var(--color-primary-text);
+  font-family: 'JetBrains Mono', monospace;
   transition: background-color 0.3s, color 0.3s;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #root {
   min-height: 100vh;
   width: 100%;
+}
+
+/* Custom scrollbar for technical look */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #CBD5E1;
+  border-radius: 2px;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background-color: #333;
+}
+
+/* Grid background utility for Focus page */
+.grid-bg-light {
+  background-image: linear-gradient(#E0E0E0 1px, transparent 1px),
+    linear-gradient(90deg, #E0E0E0 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.grid-bg-dark {
+  background-image: linear-gradient(#1f1f1f 1px, transparent 1px),
+    linear-gradient(90deg, #1f1f1f 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Typing cursor animation */
+@keyframes blink {
+
+  0%,
+  50% {
+    opacity: 1;
+  }
+
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.cursor-blink {
+  animation: blink 1s infinite;
+}
+
+/* Pulse animation for progress bars */
+@keyframes progress-pulse {
+
+  0%,
+  100% {
+    opacity: 0.8;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+.progress-pulse {
+  animation: progress-pulse 2s ease-in-out infinite;
 }
