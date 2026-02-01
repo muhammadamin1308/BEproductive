@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { shouldTaskAppearOnDate } from './recurring-task.controller';
 
 const prisma = new PrismaClient();
+// Trigger restart for prisma types - Attempt 2
 
 interface AuthRequest extends Request {
   user?: any; // Populated by auth middleware
@@ -183,6 +184,45 @@ export const updateTaskStatus = async (req: AuthRequest, res: Response) => {
       data: { status },
     });
 
+    if (task.count > 0 && status === 'DONE') {
+      // --- Streak Logic Start ---
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (user) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const lastActive = user.lastActiveDate ? new Date(user.lastActiveDate) : null;
+        if (lastActive) lastActive.setHours(0, 0, 0, 0);
+
+        let newStreak = user.currentStreak;
+        
+        if (!lastActive) {
+          newStreak = 1;
+        } else {
+          const diffTime = Math.abs(today.getTime() - lastActive.getTime());
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+
+          if (diffDays === 1) {
+            newStreak += 1;
+          } else if (diffDays > 1) {
+            newStreak = 1;
+          }
+        }
+
+        if (!lastActive || today.getTime() !== lastActive.getTime()) {
+          await prisma.user.update({
+            where: { id: userId },
+            data: {
+              currentStreak: newStreak,
+              longestStreak: Math.max(newStreak, user.longestStreak),
+              lastActiveDate: new Date(),
+            },
+          });
+        }
+      }
+      // --- Streak Logic End ---
+    }
+
     res.json(task);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update task status' });
@@ -235,6 +275,48 @@ export const updateTaskProgress = async (req: AuthRequest, res: Response) => {
       });
       updatedTask.status = 'DONE';
     }
+
+    // --- Streak Logic Start ---
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (user) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const lastActive = user.lastActiveDate ? new Date(user.lastActiveDate) : null;
+      if (lastActive) lastActive.setHours(0, 0, 0, 0);
+
+      let newStreak = user.currentStreak;
+      
+      if (!lastActive) {
+        // First time active
+        newStreak = 1;
+      } else {
+        const diffTime = Math.abs(today.getTime() - lastActive.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+
+        if (diffDays === 1) {
+          // Consecutive day
+          newStreak += 1;
+        } else if (diffDays > 1) {
+          // Streak broken
+          newStreak = 1;
+        }
+        // If diffDays === 0 (same day), do nothing
+      }
+
+      // Only update if it changed or date changed
+      if (!lastActive || today.getTime() !== lastActive.getTime()) {
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            currentStreak: newStreak,
+            longestStreak: Math.max(newStreak, user.longestStreak),
+            lastActiveDate: new Date(),
+          },
+        });
+      }
+    }
+    // --- Streak Logic End ---
 
     res.json(updatedTask);
   } catch (error) {

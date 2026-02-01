@@ -8,51 +8,36 @@ export default {
   theme: {
     extend: {
       colors: {
-        // New Command Center design palette
         primary: "#00E676", // Vibrant neon green
         "primary-dark": "#00C853",
-        
-        // Background colors
-        "background-light": "#F8F9FA",
-        "background-dark": "#121212",
-        
-        // Surface colors (cards, panels)
+        "background-light": "#FAFAFA", // Stark off-white
+        "background-dark": "#121212", 
         "surface-light": "#FFFFFF",
         "surface-dark": "#1E1E1E",
-        
-        // Border colors
-        "border-light": "#E0E0E0",
+        "border-light": "#333333", // Softened from pure black to charcoal
         "border-dark": "#333333",
-        
-        // Text colors
-        "text-main-light": "#121212",
+        "text-main-light": "#000000", // Stark black
         "text-muted-light": "#666666",
         "text-main-dark": "#E0E0E0",
         "text-muted-dark": "#888888",
-        
-        // Legacy support (for gradual migration)
-        cta: "#00E676",
-        surface: "var(--color-surface)",
-        "primary-text": "var(--color-primary-text)",
-        "secondary-text": "var(--color-secondary-text)",
-        "primary-bg": "var(--color-primary-bg)",
       },
       fontFamily: {
-        display: ['"JetBrains Mono"', 'monospace'],
-        mono: ['"JetBrains Mono"', 'monospace'],
-        sans: ['"JetBrains Mono"', 'monospace'], // Override default to mono
+        display: ["JetBrains Mono", "monospace"],
+        mono: ["JetBrains Mono", "monospace"],
+        sans: ["JetBrains Mono", "monospace"],
       },
       borderRadius: {
-        DEFAULT: "2px", // Technical sharp corners
+        DEFAULT: "0px", // Sharper corners for brutalism
       },
       boxShadow: {
-        'soft': '0 2px 8px rgba(0, 0, 0, 0.04)',
-        'tech': '2px 2px 0px 0px rgba(0,0,0,0.1)',
-      },
-      letterSpacing: {
-        'wider-tech': '0.2em',
-      },
+        'tech': '4px 4px 0px 0px #444444', // Softened shadow color
+        'tech-hover': '6px 6px 0px 0px #444444',
+        'tech-sm': '2px 2px 0px 0px #444444',
+      }
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography'), 
+    require('@tailwindcss/forms')
+  ],
 }

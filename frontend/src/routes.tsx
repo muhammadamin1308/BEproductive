@@ -7,6 +7,7 @@ import { LoginPage } from './pages/LoginPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 import { Layout } from './components/Layout';
+import { HomePage } from './pages/HomePage';
 
 export const router = createBrowserRouter([
     {
@@ -16,7 +17,7 @@ export const router = createBrowserRouter([
                 element: <Layout />,
                 children: [
                     {
-                        path: '/',
+                        path: '/dashboard',
                         element: <TodayPage />,
                     },
                     {
@@ -32,6 +33,10 @@ export const router = createBrowserRouter([
                         element: <ReviewPage />,
                     },
                 ],
+            },
+            {
+                path: '/',
+                element: <HomePage />,
             },
         ],
     },

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/axios';
+import { useAuthStore } from '../store/useAuthStore';
 
 interface Goal {
   id: string;
@@ -8,9 +9,14 @@ interface Goal {
   level: 'YEAR' | 'QUARTER' | 'MONTH' | 'WEEK';
   parentGoalId: string | null;
   createdAt: string;
+  category: string | null;
+  targetValue: number | null;
+  currentValue: number | null;
+  unit: string | null;
 }
 
 export const GoalsPage = () => {
+  const user = useAuthStore((state) => state.user);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -19,6 +25,10 @@ export const GoalsPage = () => {
     title: '',
     description: '',
     level: 'MONTH' as Goal['level'],
+    category: 'PERSONAL',
+    targetValue: '',
+    currentValue: '0',
+    unit: '',
   });
 
   useEffect(() => {
@@ -46,8 +56,9 @@ export const GoalsPage = () => {
         await api.post('/goals', formData);
       }
       setShowModal(false);
+
       setEditingGoal(null);
-      setFormData({ title: '', description: '', level: 'MONTH' });
+      setFormData({ title: '', description: '', level: 'MONTH', category: 'PERSONAL', targetValue: '', currentValue: '0', unit: '' });
       fetchGoals();
     } catch (error) {
       console.error('Error saving goal:', error);
@@ -71,13 +82,17 @@ export const GoalsPage = () => {
       title: goal.title,
       description: goal.description || '',
       level: goal.level,
+      category: goal.category || 'PERSONAL',
+      targetValue: goal.targetValue?.toString() || '',
+      currentValue: goal.currentValue?.toString() || '0',
+      unit: goal.unit || '',
     });
     setShowModal(true);
   };
 
   const handleNewGoal = (level?: Goal['level']) => {
     setEditingGoal(null);
-    setFormData({ title: '', description: '', level: level || 'MONTH' });
+    setFormData({ title: '', description: '', level: level || 'MONTH', category: 'PERSONAL', targetValue: '', currentValue: '0', unit: '' });
     setShowModal(true);
   };
 
@@ -154,7 +169,7 @@ export const GoalsPage = () => {
             </span>
           </div>
           <div className="text-5xl font-bold text-text-main-light dark:text-text-main-dark">
-            5
+            {user?.currentStreak || 0}
           </div>
         </div>
       </div>
@@ -311,6 +326,59 @@ export const GoalsPage = () => {
                     <option value="YEAR">Yearly</option>
                   </select>
                 </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase text-text-muted-light dark:text-text-muted-dark mb-2">
+                    Category
+                  </label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="w-full px-3 py-2 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark focus:outline-none focus:border-primary"
+                  >
+                    <option value="PERSONAL">Personal</option>
+                    <option value="FINANCE">Finance</option>
+                    <option value="HEALTH">Health</option>
+                    <option value="SKILL">Skill</option>
+                    <option value="CAREER">Career</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-text-muted-light dark:text-text-muted-dark mb-2">
+                      Target Value
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.targetValue}
+                      onChange={(e) => setFormData({ ...formData, targetValue: e.target.value })}
+                      className="w-full px-3 py-2 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark focus:outline-none focus:border-primary"
+                      placeholder="e.g. 100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-text-muted-light dark:text-text-muted-dark mb-2">
+                      Unit
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.unit}
+                      onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                      className="w-full px-3 py-2 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark focus:outline-none focus:border-primary"
+                      placeholder="e.g. Books"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase text-text-muted-light dark:text-text-muted-dark mb-2">
+                    Current Progress
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.currentValue}
+                    onChange={(e) => setFormData({ ...formData, currentValue: e.target.value })}
+                    className="w-full px-3 py-2 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark focus:outline-none focus:border-primary"
+                  />
+                </div>
               </div>
               <div className="flex gap-3 mt-6">
                 <button
@@ -318,7 +386,7 @@ export const GoalsPage = () => {
                   onClick={() => {
                     setShowModal(false);
                     setEditingGoal(null);
-                    setFormData({ title: '', description: '', level: 'MONTH' });
+                    setFormData({ title: '', description: '', level: 'MONTH', category: 'PERSONAL', targetValue: '', currentValue: '0', unit: '' });
                   }}
                   className="flex-1 px-4 py-2 border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark hover:bg-background-light dark:hover:bg-background-dark transition-colors uppercase text-sm font-bold"
                 >
@@ -333,9 +401,9 @@ export const GoalsPage = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div >
       )}
-    </div>
+    </div >
   );
 };
 
@@ -358,6 +426,17 @@ const GoalCard = ({
     WEEK: 'Skill',
   };
 
+  // Calculate progress
+  let progressPercentage = 0;
+  if (goal.targetValue) {
+    progressPercentage = Math.min(100, Math.round(((goal.currentValue || 0) / goal.targetValue) * 100));
+  } else {
+    // Fallback for task-based progress (if backend calculated it)
+    // But we don't have that field in interface yet explicitly, although backend sends it. 
+    // We can assume if no targetValue, we show 0 or handle task count if available.
+    progressPercentage = 0;
+  }
+
   return (
     <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark p-6 hover:border-primary transition-colors group">
       <div className="flex justify-between items-start mb-4">
@@ -365,8 +444,8 @@ const GoalCard = ({
           <span className="text-[10px] font-bold text-text-muted-light dark:text-text-muted-dark">
             ID: {String(index).padStart(2, '0')}
           </span>
-          <span className="inline-block bg-text-main-light dark:bg-white text-white dark:text-black text-[10px] px-1.5 py-0.5 font-bold uppercase w-fit">
-            {categoryLabels[goal.level]}
+          <span className="inline-block bg-black text-white text-[10px] px-1.5 py-0.5 font-bold uppercase w-fit">
+            {goal.category || categoryLabels[goal.level] || 'GENERAL'}
           </span>
         </div>
         <div className="relative">
@@ -392,18 +471,20 @@ const GoalCard = ({
           {goal.description}
         </p>
       )}
-      {/* Placeholder progress - would need backend support */}
+      {/* Progress Display */}
       <div className="flex justify-between items-end text-[10px] font-bold mb-2 uppercase tracking-wider">
-        <span className="text-text-muted-light dark:text-text-muted-dark">Progress</span>
+        <span className="text-text-muted-light dark:text-text-muted-dark">
+          {goal.targetValue ? `${goal.currentValue || 0} / ${goal.targetValue} ${goal.unit || ''}` : 'Progress'}
+        </span>
         <div>
-          <span className="text-lg text-text-main-light dark:text-text-main-dark">0</span>{' '}
+          <span className="text-lg text-text-main-light dark:text-text-main-dark">{progressPercentage}</span>{' '}
           <span className="text-text-muted-light dark:text-text-muted-dark">/ 100%</span>
         </div>
       </div>
       <div className="w-full bg-border-light dark:bg-border-dark h-1.5 relative">
-        <div className="absolute top-0 left-0 h-full bg-primary" style={{ width: '0%' }}></div>
+        <div className="absolute top-0 left-0 h-full bg-primary" style={{ width: `${progressPercentage}%` }}></div>
       </div>
-      <div className="text-right mt-1 text-[10px] font-bold text-primary">0%</div>
+      <div className="text-right mt-1 text-[10px] font-bold text-primary">{progressPercentage}%</div>
     </div>
   );
 };

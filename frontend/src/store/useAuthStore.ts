@@ -5,6 +5,10 @@ interface User {
   id: string;
   email: string;
   name: string;
+  currentStreak?: number;
+  longestStreak?: number;
+  lastActiveDate?: string;
+  weeklySessionGoal?: number;
 }
 
 interface AuthState {

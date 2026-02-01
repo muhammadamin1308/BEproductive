@@ -21,7 +21,7 @@ export const Layout = () => {
     }, [theme]);
 
     const navItems = [
-        { to: '/', icon: 'dashboard', label: 'Today' },
+        { to: '/dashboard', icon: 'dashboard', label: 'Today' },
         { to: '/focus', icon: 'timer', label: 'Focus' },
         { to: '/goals', icon: 'track_changes', label: 'Goals' },
     ];
@@ -72,8 +72,8 @@ export const Layout = () => {
                             key={to}
                             to={to}
                             className={`flex flex-col items-center gap-1 px-4 py-2 rounded transition-colors ${isActive
-                                    ? 'text-primary'
-                                    : 'text-text-muted-light dark:text-text-muted-dark'
+                                ? 'text-primary'
+                                : 'text-text-muted-light dark:text-text-muted-dark'
                                 }`}
                         >
                             <span className="material-icons text-xl">{icon}</span>

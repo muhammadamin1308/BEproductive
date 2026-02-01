@@ -18,6 +18,10 @@ model User {
   tasks     Task[]
   reflections Reflection[]
   recurringTasks RecurringTask[]
+  currentStreak    Int       @default(0)
+  longestStreak    Int       @default(0)
+  lastActiveDate   DateTime?
+  weeklySessionGoal Int      @default(50)
 }
 
 model Goal {
@@ -34,6 +38,10 @@ model Goal {
   recurringTasks RecurringTask[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  category     String?
+  targetValue  Float?
+  currentValue Float?    @default(0)
+  unit         String?
 }
 
 model Task {

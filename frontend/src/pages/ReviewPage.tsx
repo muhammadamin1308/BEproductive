@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/axios';
 import { format, startOfWeek, endOfWeek, addDays } from 'date-fns';
+import { useAuthStore } from '../store/useAuthStore';
 
 interface DailyStats {
   [date: string]: { completed: number; total: number };
@@ -11,6 +12,7 @@ interface WeeklyStats {
   totalTasks: number;
   completedTasks: number;
   completionRate: number;
+  efficiency: number;
   totalFocusMinutes: number;
   totalFocusHours: number;
   interruptedSessions: number;
@@ -28,6 +30,7 @@ interface Reflection {
 }
 
 export const ReviewPage = () => {
+  const user = useAuthStore((state) => state.user);
   const [stats, setStats] = useState<WeeklyStats | null>(null);
   const [_reflection, setReflection] = useState<Reflection | null>(null);
   const [loading, setLoading] = useState(true);
@@ -175,13 +178,13 @@ export const ReviewPage = () => {
             <span className="material-icons">pie_chart</span>
           </div>
           <div className="text-xs uppercase text-text-muted-light dark:text-text-muted-dark mb-1 tracking-widest">
-            Completion Rate
+            Efficiency
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-5xl font-bold text-text-main-light dark:text-text-main-dark">
-              {stats?.completionRate || 0}%
+              {stats?.efficiency || 0}%
             </span>
-            <span className="text-sm text-primary font-bold">+5%</span>
+            <span className="text-sm text-primary font-bold">OPTIMAL</span>
           </div>
         </div>
 
@@ -213,7 +216,7 @@ export const ReviewPage = () => {
               {focusedSessions}
             </span>
             <span className="text-sm text-text-muted-light dark:text-text-muted-dark font-mono">
-              /50 GOAL
+              /{user?.weeklySessionGoal || 50} GOAL
             </span>
           </div>
         </div>

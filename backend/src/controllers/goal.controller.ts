@@ -142,6 +142,10 @@ export const createGoal = async (req: Request, res: Response) => {
         description: description || null,
         level,
         parentGoalId: parentGoalId || null,
+        category: req.body.category || null,
+        targetValue: req.body.targetValue || null,
+        currentValue: req.body.currentValue || 0,
+        unit: req.body.unit || null,
       },
       include: {
         subGoals: true,
@@ -182,7 +186,7 @@ export const updateGoal = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     const id = req.params.id as string;
-    const { title, description, level, parentGoalId } = req.body;
+    const { title, description, level, parentGoalId, category, targetValue, currentValue, unit } = req.body;
 
     // Check if goal exists and belongs to user
     const existingGoal = await prisma.goal.findFirst({
@@ -234,6 +238,10 @@ export const updateGoal = async (req: Request, res: Response) => {
         ...(description !== undefined && { description }),
         ...(level && { level }),
         ...(parentGoalId !== undefined && { parentGoalId }),
+        ...(category !== undefined && { category }),
+        ...(targetValue !== undefined && { targetValue }),
+        ...(currentValue !== undefined && { currentValue }),
+        ...(unit !== undefined && { unit }),
       },
       include: {
         subGoals: true,

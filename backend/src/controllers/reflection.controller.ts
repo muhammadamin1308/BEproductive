@@ -147,12 +147,18 @@ export const getWeeklyStats = async (req: AuthRequest, res: Response) => {
     const totalTasks = tasks.length;
     const completedTasks = tasks.filter(t => t.status === 'DONE').length;
     const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    
+    // Calculate Efficiency (Pomodoros Completed / Total Planned)
+    const totalPomodorosCompleted = tasks.reduce((sum, t) => sum + (t.pomodorosCompleted || 0), 0);
+    const totalPomodorosPlanned = tasks.reduce((sum, t) => sum + (t.pomodorosTotal || 0), 0);
+    const efficiency = totalPomodorosPlanned > 0 ? Math.round((totalPomodorosCompleted / totalPomodorosPlanned) * 100) : 0;
 
     res.json({
       dailyStats,
       totalTasks,
       completedTasks,
       completionRate,
+      efficiency,
       totalFocusMinutes: Math.round(totalFocusMinutes),
       totalFocusHours: Math.round(totalFocusMinutes / 60 * 10) / 10,
       interruptedSessions,
