@@ -10,6 +10,7 @@ export const Header = () => {
     const navItems = [
         { to: '/dashboard', icon: 'dashboard', label: 'TODAY' },
         { to: '/focus', icon: 'timer', label: 'FOCUS' },
+        { to: '/deadlines', icon: 'event_note', label: 'DEADLINES' },
         { to: '/review', icon: 'rate_review', label: 'REVIEW' },
         { to: '/goals', icon: 'track_changes', label: 'GOALS' },
     ];

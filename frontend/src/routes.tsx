@@ -4,6 +4,7 @@ import { GoalsPage } from './pages/GoalsPage';
 import { ReviewPage } from './pages/ReviewPage';
 import { TodayPage } from './pages/TodayPage';
 import { LoginPage } from './pages/LoginPage';
+import { DeadlinesPage } from './pages/DeadlinesPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 import { Layout } from './components/Layout';
@@ -27,6 +28,10 @@ export const router = createBrowserRouter([
                     {
                         path: '/goals',
                         element: <GoalsPage />,
+                    },
+                    {
+                        path: '/deadlines',
+                        element: <DeadlinesPage />,
                     },
                     {
                         path: '/review',

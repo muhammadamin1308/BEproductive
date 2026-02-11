@@ -23,6 +23,7 @@ export const Layout = () => {
     const navItems = [
         { to: '/dashboard', icon: 'dashboard', label: 'Today' },
         { to: '/focus', icon: 'timer', label: 'Focus' },
+        { to: '/deadlines', icon: 'event_note', label: 'Due' },
         { to: '/goals', icon: 'track_changes', label: 'Goals' },
     ];
 
