@@ -1,6 +1,8 @@
 import { useFocusStore } from '../store/useFocusStore';
+import { useThemeStore } from '../store/useThemeStore';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import { CountdownCircleTimer } from 'react-countdown-circle-timer';
 
 export const FocusPage = () => {
     const {
@@ -14,6 +16,7 @@ export const FocusPage = () => {
         skipTimer,
         setActiveTask,
     } = useFocusStore();
+    const { theme } = useThemeStore();
     const navigate = useNavigate();
 
     // Check if task is complete and redirect
@@ -40,10 +43,18 @@ export const FocusPage = () => {
 
     // Calculate progress for SVG ring
     const totalSeconds = mode === 'POMODORO' ? 25 * 60 : mode === 'SHORT_BREAK' ? 5 * 60 : 15 * 60;
-    const progress = ((totalSeconds - timeLeft) / totalSeconds) * 100;
-    const circumference = 2 * Math.PI * 48; // radius is 48%
-    const strokeDashoffset = circumference - (progress / 100) * circumference;
 
+    const getTimerColor = () => {
+        switch (mode) {
+            case 'SHORT_BREAK':
+                return '#10B981';
+            case 'LONG_BREAK':
+                return '#3B82F6';
+            default:
+                return '#00E676';
+        }
+    };
+    
     // Session info
     const currentSession = activeTask ? activeTask.pomodorosCompleted + 1 : 1;
     const totalSessions = activeTask?.pomodorosTotal || 4;
@@ -80,7 +91,7 @@ export const FocusPage = () => {
                         <span className="text-primary">{'>'}</span> ROOT / FOCUS_MODE / ACTIVE_SESSION
                     </div>
                     <div className="hidden sm:block">
-                        MEM: 45% | CPU: 12% | LATENCY: 14ms
+                        MEM: 23% | CPU: 12% | LATENCY: 14ms
                     </div>
                 </div>
 
@@ -95,28 +106,20 @@ export const FocusPage = () => {
                     {/* Timer Display */}
                     <div className="flex justify-center mb-8 relative">
                         <div className="relative w-64 h-64 flex items-center justify-center">
-                            <svg className="w-full h-full transform -rotate-90">
-                                <circle
-                                    className="text-gray-200 dark:text-gray-800"
-                                    cx="50%"
-                                    cy="50%"
-                                    fill="transparent"
-                                    r="48%"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                />
-                                <circle
-                                    className="text-primary transition-all duration-1000 ease-linear"
-                                    cx="50%"
-                                    cy="50%"
-                                    fill="transparent"
-                                    r="48%"
-                                    stroke="currentColor"
-                                    strokeDasharray={`${circumference}`}
-                                    strokeDashoffset={strokeDashoffset}
-                                    strokeWidth="4"
-                                />
-                            </svg>
+                            <CountdownCircleTimer
+                                key={`${mode}-${isActive ? 'active' : 'paused'}`}
+                                isPlaying={isActive}
+                                duration={totalSeconds}
+                                initialRemainingTime={timeLeft}
+                                colors={[getTimerColor(), getTimerColor()]}
+                                colorsTime={[totalSeconds, 0]}
+                                trailColor={theme === 'dark' ? '#333333' : '#e5e7eb'}
+                                size={250}
+                                strokeWidth={12}
+                                onComplete={() => ({ shouldRepeat: false })}
+                            >
+                                {() => null}
+                            </CountdownCircleTimer>
                             <div className="absolute text-center flex flex-col items-center">
                                 <div className="text-6xl md:text-7xl font-bold text-text-main-light dark:text-text-main-dark tracking-tighter tabular-nums">
                                     {formatTime(timeLeft)}
