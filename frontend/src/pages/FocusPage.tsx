@@ -34,6 +34,11 @@ export const FocusPage = () => {
     };
 
     const handleToggleTimer = () => {
+        if (!activeTask && mode === 'POMODORO') {
+            navigate('/dashboard');
+            return;
+        }
+
         if (isActive) {
             pauseTimer();
         } else {
@@ -154,9 +159,9 @@ export const FocusPage = () => {
                             className="w-full py-4 bg-primary hover:bg-opacity-90 text-black font-bold uppercase tracking-widest transition-all transform active:scale-[0.98] border-2 border-transparent hover:shadow-[0_0_15px_rgba(0,224,84,0.4)] flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <span className="material-icons group-hover:animate-pulse">
-                                {isActive ? 'pause' : 'play_arrow'}
+                                {!activeTask && mode === 'POMODORO' ? 'list' : isActive ? 'pause' : 'play_arrow'}
                             </span>
-                            {isActive ? 'PAUSE TIMER' : 'RESUME TIMER'}
+                            {!activeTask && mode === 'POMODORO' ? 'SELECT TASK' : isActive ? 'PAUSE TIMER' : 'RESUME TIMER'}
                         </button>
 
                         {mode !== 'POMODORO' && (
