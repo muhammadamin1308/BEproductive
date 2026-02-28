@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 interface ToastState {
   message: string | null;
-  timeoutId: NodeJS.Timeout | null;
+  timeoutId: ReturnType<typeof setTimeout> | null;
   showToast: (message: string) => void;
   hideToast: () => void;
 }

@@ -124,7 +124,6 @@ export const TaskCard = ({ task, isFirst = false }: TaskCardProps) => {
 
     const isDone = task.status === 'DONE';
     const progressPercent = Math.min((task.pomodorosCompleted / task.pomodorosTotal) * 100, 100);
-    const taskId = `ID: ${String(task.id).slice(0, 4).toUpperCase()}`;
 
     if (isEditing) {
         return (
