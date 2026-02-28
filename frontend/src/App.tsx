@@ -1,4 +1,5 @@
 import { RouterProvider } from 'react-router-dom';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { AppProvider } from './providers/AppProvider';
 import { router } from './routes';
 import { OfflineIndicator } from './components/OfflineIndicator';
@@ -12,6 +13,7 @@ function App() {
                 <RouterProvider router={router} />
                 <OfflineIndicator />
                 <GlobalToast />
+                <SpeedInsights />
             </AppProvider>
         </ErrorBoundary>
     );
