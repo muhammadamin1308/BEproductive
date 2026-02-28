@@ -18,7 +18,7 @@ export const router = createBrowserRouter([
                 element: <Layout />,
                 children: [
                     {
-                        path: '/dashboard',
+                        path: '/',
                         element: <TodayPage />,
                     },
                     {
@@ -40,7 +40,7 @@ export const router = createBrowserRouter([
                 ],
             },
             {
-                path: '/',
+                path: '/home',
                 element: <HomePage />,
             },
         ],

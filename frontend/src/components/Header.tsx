@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useThemeStore } from '../store/useThemeStore';
+import { api } from '../lib/axios';
 
 interface SidebarProps {
     isOpen?: boolean;
@@ -14,6 +15,15 @@ export const Header = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse 
     const { pathname } = useLocation();
     const logout = useAuthStore(state => state.logout);
     const { theme, toggleTheme } = useThemeStore();
+
+    const handleLogout = async () => {
+        try {
+            await api.post('/auth/logout');
+        } catch (_) {
+            // proceed with local logout even if request fails
+        }
+        logout();
+    };
 
     useEffect(() => {
         onClose?.();
@@ -101,7 +111,7 @@ export const Header = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse 
                     {!collapsed && (theme === 'light' ? 'Dark Mode' : 'Light Mode')}
                 </button>
                 <button
-                    onClick={logout}
+                    onClick={handleLogout}
                     title={collapsed ? 'Logout' : undefined}
                     className={`flex items-center rounded text-[11px] font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark hover:bg-background-light dark:hover:bg-background-dark hover:text-red-500 transition-colors w-full py-2.5 ${
                         collapsed ? 'justify-center px-0' : 'gap-3 px-3'
