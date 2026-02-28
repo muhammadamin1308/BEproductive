@@ -203,19 +203,21 @@ export const TodayPage = () => {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-border-light dark:bg-border-dark mb-12">
                 <StatsCard
                     title="Tasks Completed"
                     value={completedTasks}
                     suffix={`/${totalTasks}`}
                     icon="check_circle"
                     progress={{ current: completedTasks, total: Math.max(totalTasks, 1) }}
+                    className="border-0 hover:border-0"
                 />
                 <StatsCard
                     title="Estimated Focus Time"
                     value={focusTimeText}
                     suffix={focusTimeSuffix}
                     icon="timelapse"
+                    className="border-0 hover:border-0"
                 />
 
             </div>

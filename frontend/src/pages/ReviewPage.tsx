@@ -123,7 +123,7 @@ export const ReviewPage = () => {
   const focusedSessions = stats ? stats.totalSessions - stats.interruptedSessions : 0;
 
   return (
-    <div className="p-6 md:p-12 max-w-5xl mx-auto w-full">
+    <div className="p-6 md:p-12 max-w-7xl mx-auto w-full">
       {/* Header */}
       <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
@@ -207,7 +207,7 @@ export const ReviewPage = () => {
           <span className="material-icons text-base">bar_chart</span>
           Daily Activity
         </h3>
-        <div className="flex items-end justify-between h-40 gap-2 md:gap-4">
+        <div className="flex items-end justify-between h-52 gap-2 md:gap-4">
           {weekDays.map((day) => {
             const dateStr = format(day, 'yyyy-MM-dd');
             const dayStats = stats?.dailyStats[dateStr] || { completed: 0, total: 0 };
@@ -222,7 +222,7 @@ export const ReviewPage = () => {
                 className="flex-1 flex flex-col items-center gap-2 group cursor-pointer"
               >
                 <div
-                  className="w-full max-w-[40px] bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark h-full relative flex items-end"
+                  className="w-full max-w-[60px] bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark h-full relative flex items-end"
                   style={{ height: '140px' }}
                 >
                   {height > 0 && (

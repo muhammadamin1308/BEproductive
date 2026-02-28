@@ -14,6 +14,7 @@ interface StatsCardProps {
         total: number;
     };
     variant?: 'default' | 'highlight';
+    className?: string;
 }
 
 export const StatsCard = ({
@@ -24,9 +25,10 @@ export const StatsCard = ({
     trend,
     progress,
     variant = 'default',
+    className = '',
 }: StatsCardProps) => {
     return (
-        <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark p-6 relative group hover:shadow-tech transition-all">
+        <div className={`bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark p-6 relative group hover:border-primary transition-all ${className}`}>
             {/* Icon */}
             {icon && (
                 <div className="absolute top-4 right-4 text-text-muted-light dark:text-text-muted-dark">
