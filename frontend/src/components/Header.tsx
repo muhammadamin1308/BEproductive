@@ -30,7 +30,7 @@ export const Header = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse 
     }, [pathname]);
 
     const navItems = [
-        { to: '/dashboard', icon: 'dashboard', label: 'TODAY' },
+        { to: '/', icon: 'dashboard', label: 'TODAY' },
         { to: '/focus', icon: 'timer', label: 'FOCUS' },
         { to: '/deadlines', icon: 'event_note', label: 'DEADLINES' },
         { to: '/goals', icon: 'track_changes', label: 'GOALS' },
