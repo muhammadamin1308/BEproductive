@@ -1,4 +1,10 @@
 {
     "prisma.pinToPrisma6": true,
-    "postman.settings.dotenv-detection-notification-visibility": false
+    "postman.settings.dotenv-detection-notification-visibility": false,
+    "chat.tools.terminal.autoApprove": {
+        "/^docker compose up -d$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
 }

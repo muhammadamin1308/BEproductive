@@ -1,42 +1,35 @@
 import { useState } from 'react';
 
-interface TerminalInputProps {
+
+interface AddTaskInputProps {
     onSubmit: (data: {
         title: string;
+        description?: string;
         pomodoros: number;
         tags?: string;
     }) => void;
     isLoading?: boolean;
 }
 
-export const TerminalInput = ({ onSubmit, isLoading }: TerminalInputProps) => {
+
+export const AddTaskInput = ({ onSubmit, isLoading }: AddTaskInputProps) => {
     const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
     const [pomodoros, setPomodoros] = useState(2);
     const [tags, setTags] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!title.trim()) return;
-        onSubmit({ title, pomodoros, tags: tags || undefined });
+        onSubmit({ title, description: description || undefined, pomodoros, tags: tags || undefined });
         setTitle('');
+        setDescription('');
         setTags('');
         setPomodoros(2);
     };
 
     return (
-        <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark shadow-tech p-1">
-            {/* Terminal Header */}
-            <div className="bg-background-light dark:bg-background-dark px-3 py-1 flex items-center justify-between border-b border-border-light dark:border-border-dark mb-1">
-                <span className="text-xs font-bold uppercase text-text-muted-light dark:text-text-muted-dark">
-                    Terminal Input
-                </span>
-                <div className="flex gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-red-400"></div>
-                    <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
-                    <div className="w-2 h-2 rounded-full bg-green-400"></div>
-                </div>
-            </div>
-
+        <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark p-1">
             {/* Input Area */}
             <div className="p-4">
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -48,10 +41,23 @@ export const TerminalInput = ({ onSubmit, isLoading }: TerminalInputProps) => {
                                 type="text"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                className="w-full bg-transparent border-none focus:ring-0 p-2 font-mono text-text-main-light dark:text-text-main-dark placeholder-text-muted-light dark:placeholder-text-muted-dark text-lg outline-none"
+                                className="w-full bg-transparent border border-border-light dark:border-border-dark focus:ring-0 p-2 font-mono text-text-main-light dark:text-text-main-dark placeholder-text-muted-light dark:placeholder-text-muted-dark focus:border-primary text-lg outline-none"
                                 placeholder="Enter new task directive..."
                             />
-                            <div className="h-px bg-border-light dark:bg-border-dark w-full"></div>
+                        </div>
+                    </div>
+
+                    {/* Description Input */}
+                    <div className="flex gap-2 text-lg">
+                        <span className="text-primary font-bold mt-2">$</span>
+                        <div className="w-full">
+                            <textarea
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                className="w-full bg-transparent border border-border-light dark:border-border-dark focus:ring-0 p-2 font-mono text-text-main-light dark:text-text-main-dark placeholder-text-muted-light dark:placeholder-text-muted-dark focus:border-primary text-md outline-none"
+                                placeholder="Add details or notes..."
+                                rows={1}
+                            />
                         </div>
                     </div>
 
@@ -94,11 +100,11 @@ export const TerminalInput = ({ onSubmit, isLoading }: TerminalInputProps) => {
                         </div>
 
                         {/* Submit Button */}
-                        <div className="flex items-end mt-4 md:mt-0">
+                        <div className="flex items-end mt-4">
                             <button
                                 type="submit"
                                 disabled={!title.trim() || isLoading}
-                                className="bg-text-main-light dark:bg-white text-white dark:text-black px-6 py-2 text-sm font-bold uppercase hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="bg-primary dark:bg-white text-white dark:text-black px-6 py-2 text-sm font-bold uppercase hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <span className="material-icons text-sm">add</span>
                                 Add Task

@@ -8,6 +8,7 @@ import taskRoutes from "./routes/task.routes";
 import goalRoutes from "./routes/goal.routes";
 import reflectionRoutes from "./routes/reflection.routes";
 import recurringTaskRoutes from "./routes/recurring-task.routes";
+import deadlineRoutes from "./routes/deadline.routes";
 
 dotenv.config();
 
@@ -34,6 +35,8 @@ app.use("/tasks", taskRoutes);
 app.use("/goals", goalRoutes);
 app.use("/reflections", reflectionRoutes);
 app.use("/recurring-tasks", recurringTaskRoutes);
+app.use("/deadlines", deadlineRoutes);
+app.use("/api/deadlines", deadlineRoutes);
 
 app.get("/health", (req, res) => {
   res.send("OK");

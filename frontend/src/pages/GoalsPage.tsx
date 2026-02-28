@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/axios';
 import { useAuthStore } from '../store/useAuthStore';
+import { useToastStore } from '../store/useToastStore';
 
 interface Goal {
   id: string;
@@ -17,10 +18,14 @@ interface Goal {
 
 export const GoalsPage = () => {
   const user = useAuthStore((state) => state.user);
+  const showToast = useToastStore((state) => state.showToast);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
+  const [completionRate, setCompletionRate] = useState(0);
+  const [showFilter, setShowFilter] = useState(false);
+  const [visibleLevels, setVisibleLevels] = useState<Set<Goal['level']>>(new Set(['YEAR', 'QUARTER', 'MONTH', 'WEEK']));
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -40,6 +45,17 @@ export const GoalsPage = () => {
       setLoading(true);
       const response = await api.get('/goals');
       setGoals(response.data);
+      
+      // Calculate completion rate from goals data
+      const goalsWithTargets = response.data.filter((g: Goal) => g.targetValue);
+      if (goalsWithTargets.length > 0) {
+        const avgProgress = goalsWithTargets.reduce((sum: number, g: Goal) => {
+          return sum + Math.min(100, ((g.currentValue || 0) / (g.targetValue || 1)) * 100);
+        }, 0) / goalsWithTargets.length;
+        setCompletionRate(Math.round(avgProgress));
+      } else {
+        setCompletionRate(0);
+      }
     } catch (error) {
       console.error('Error fetching goals:', error);
     } finally {
@@ -50,18 +66,26 @@ export const GoalsPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const payload = {
+        ...formData,
+        targetValue: formData.targetValue ? parseFloat(formData.targetValue) : null,
+        currentValue: formData.currentValue ? parseFloat(formData.currentValue) : 0,
+      };
+
       if (editingGoal) {
-        await api.put(`/goals/${editingGoal.id}`, formData);
+        await api.put(`/goals/${editingGoal.id}`, payload);
       } else {
-        await api.post('/goals', formData);
+        await api.post('/goals', payload);
       }
       setShowModal(false);
 
       setEditingGoal(null);
       setFormData({ title: '', description: '', level: 'MONTH', category: 'PERSONAL', targetValue: '', currentValue: '0', unit: '' });
       fetchGoals();
+      showToast(editingGoal ? 'Goal updated' : 'Goal created');
     } catch (error) {
       console.error('Error saving goal:', error);
+      showToast('Failed to save goal');
     }
   };
 
@@ -71,8 +95,10 @@ export const GoalsPage = () => {
     try {
       await api.delete(`/goals/${id}`);
       fetchGoals();
+      showToast('Goal deleted');
     } catch (error) {
       console.error('Error deleting goal:', error);
+      showToast('Failed to delete goal');
     }
   };
 
@@ -97,9 +123,10 @@ export const GoalsPage = () => {
   };
 
   const yearlyGoals = goals.filter((g) => g.level === 'YEAR');
+  const quarterlyGoals = goals.filter((g) => g.level === 'QUARTER');
   const monthlyGoals = goals.filter((g) => g.level === 'MONTH');
+  const weeklyGoals = goals.filter((g) => g.level === 'WEEK');
   const activeGoals = goals.length;
-  const completionRate = 85; // Placeholder - would need backend support
 
   if (loading) {
     return (
@@ -125,11 +152,51 @@ export const GoalsPage = () => {
             Track your progress and achieve your dreams.
           </p>
         </div>
-        <div className="text-right text-[10px] leading-tight font-bold tracking-wider text-text-muted-light dark:text-text-muted-dark">
-          <div className="mb-1">
-            SYSTEM STATUS: <span className="text-primary">ONLINE</span>
+        <div className="flex items-center gap-3">
+          {/* Filter Button */}
+          <div className="relative">
+            <button
+              onClick={() => setShowFilter((v) => !v)}
+              className="h-9 px-4 border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark hover:border-primary transition-all text-[10px] font-bold uppercase tracking-widest inline-flex items-center gap-1.5"
+            >
+              <span className="material-icons text-sm">filter_list</span>
+              Filter
+              {visibleLevels.size < 4 && (
+                <span className="ml-1 bg-primary text-black text-[9px] font-bold px-1 rounded-sm">{visibleLevels.size}</span>
+              )}
+            </button>
+            {showFilter && (
+              <div className="absolute right-0 top-11 z-50 bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark shadow-xl p-4 min-w-[160px]">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark mb-3">Show Periods</p>
+                {(['YEAR', 'QUARTER', 'MONTH', 'WEEK'] as Goal['level'][]).map((level) => (
+                  <label key={level} className="flex items-center gap-2 cursor-pointer py-1 group">
+                    <input
+                      type="checkbox"
+                      checked={visibleLevels.has(level)}
+                      onChange={() => {
+                        setVisibleLevels((prev) => {
+                          const next = new Set(prev);
+                          next.has(level) ? next.delete(level) : next.add(level);
+                          return next;
+                        });
+                      }}
+                      className="accent-primary w-3 h-3"
+                    />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-text-main-light dark:text-text-main-dark group-hover:text-primary transition-colors">
+                      {level === 'YEAR' ? 'Yearly' : level === 'QUARTER' ? 'Quarterly' : level === 'MONTH' ? 'Monthly' : 'Weekly'}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
-          <div>LAST SYNC: {new Date().toLocaleTimeString()}</div>
+          <button
+            onClick={() => handleNewGoal()}
+            className="h-9 px-4 bg-primary text-black hover:bg-primary-dark transition-all hover:shadow-[0_0_12px_rgba(0,224,118,0.3)] text-[10px] font-bold uppercase tracking-widest inline-flex items-center gap-1.5"
+          >
+            <span className="material-icons text-sm">add</span>
+            New Goal
+          </button>
         </div>
       </header>
 
@@ -175,7 +242,7 @@ export const GoalsPage = () => {
       </div>
 
       {/* Yearly Goals Section */}
-      <section className="mb-12">
+      {visibleLevels.has('YEAR') && <section className="mb-12">
         <div className="flex items-center justify-between mb-6 border-b border-border-light dark:border-border-dark pb-2">
           <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 text-text-main-light dark:text-text-main-dark">
             <span className="material-icons text-base">calendar_today</span>
@@ -212,10 +279,50 @@ export const GoalsPage = () => {
             </div>
           )}
         </div>
-      </section>
+      </section>}
+
+      {/* Quarterly Goals Section */}
+      {visibleLevels.has('QUARTER') && <section className="mb-12">
+        <div className="flex items-center justify-between mb-6 border-b border-border-light dark:border-border-dark pb-2">
+          <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 text-text-main-light dark:text-text-main-dark">
+            <span className="material-icons text-base">pie_chart</span>
+            Quarterly Goals
+          </h2>
+          <button
+            onClick={() => handleNewGoal('QUARTER')}
+            className="text-[10px] font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark hover:text-primary transition-colors"
+          >
+            + Add
+          </button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {quarterlyGoals.map((goal, idx) => (
+            <GoalCard
+              key={goal.id}
+              goal={goal}
+              index={idx + 1}
+              onEdit={() => handleEdit(goal)}
+              onDelete={() => handleDelete(goal.id)}
+            />
+          ))}
+          {quarterlyGoals.length === 0 && (
+            <div className="col-span-2 bg-surface-light dark:bg-surface-dark border border-dashed border-border-light dark:border-border-dark p-8 text-center">
+              <p className="text-text-muted-light dark:text-text-muted-dark text-sm">
+                No quarterly goals yet.{' '}
+                <button
+                  onClick={() => handleNewGoal('QUARTER')}
+                  className="text-primary hover:underline"
+                >
+                  Create one
+                </button>
+              </p>
+            </div>
+          )}
+        </div>
+      </section>}
 
       {/* Monthly Focus Section */}
-      <section className="mb-12">
+      {visibleLevels.has('MONTH') && <section className="mb-12">
         <div className="flex items-center justify-between mb-6 border-b border-border-light dark:border-border-dark pb-2">
           <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 text-text-main-light dark:text-text-main-dark">
             <span className="material-icons text-base">schedule</span>
@@ -252,23 +359,47 @@ export const GoalsPage = () => {
             </div>
           )}
         </div>
-      </section>
+      </section>}
 
-      {/* Create New Goal CTA */}
-      <section
-        onClick={() => handleNewGoal()}
-        className="border border-dashed border-text-muted-light dark:border-text-muted-dark p-12 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors group"
-      >
-        <span className="material-icons text-3xl mb-4 text-text-muted-light dark:text-text-muted-dark group-hover:text-primary transition-colors">
-          add_task
-        </span>
-        <h3 className="text-lg font-bold uppercase tracking-[0.2em] mb-2 text-text-main-light dark:text-text-main-dark">
-          Create A New Goal
-        </h3>
-        <p className="text-[10px] font-bold text-text-muted-light dark:text-text-muted-dark uppercase tracking-wider">
-          Define your next milestone
-        </p>
-      </section>
+      {/* Weekly Goals Section */}
+      {visibleLevels.has('WEEK') && <section className="mb-12">
+        <div className="flex items-center justify-between mb-6 border-b border-border-light dark:border-border-dark pb-2">
+          <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 text-text-main-light dark:text-text-main-dark">
+            <span className="material-icons text-base">view_week</span>
+            Weekly Goals
+          </h2>
+          <button
+            onClick={() => handleNewGoal('WEEK')}
+            className="text-[10px] font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark hover:text-primary transition-colors"
+          >
+            + Add
+          </button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {weeklyGoals.map((goal, idx) => (
+            <GoalCard
+              key={goal.id}
+              goal={goal}
+              index={idx + 1}
+              onEdit={() => handleEdit(goal)}
+              onDelete={() => handleDelete(goal.id)}
+            />
+          ))}
+          {weeklyGoals.length === 0 && (
+            <div className="col-span-2 bg-surface-light dark:bg-surface-dark border border-dashed border-border-light dark:border-border-dark p-8 text-center">
+              <p className="text-text-muted-light dark:text-text-muted-dark text-sm">
+                No weekly goals yet.{' '}
+                <button
+                  onClick={() => handleNewGoal('WEEK')}
+                  className="text-primary hover:underline"
+                >
+                  Create one
+                </button>
+              </p>
+            </div>
+          )}
+        </div>
+      </section>}
 
       {/* Modal */}
       {showModal && (

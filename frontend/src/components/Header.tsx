@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useThemeStore } from '../store/useThemeStore';
@@ -6,6 +7,18 @@ export const Header = () => {
     const { pathname } = useLocation();
     const logout = useAuthStore(state => state.logout);
     const { theme, toggleTheme } = useThemeStore();
+    const [showSettings, setShowSettings] = useState(false);
+    const settingsRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
+                setShowSettings(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const navItems = [
         { to: '/dashboard', icon: 'dashboard', label: 'TODAY' },
@@ -18,13 +31,10 @@ export const Header = () => {
     return (
         <header className="border-b border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-6 py-3 flex justify-between items-center sticky top-0 z-10">
             {/* Logo */}
-            <div className="flex items-center gap-3">
-                <span className="material-icons text-primary text-xl">terminal</span>
+            <div className="flex items-center gap-1">
+                <img src="/logo-tab.svg" alt="Doable Logo" className="w-8 h-8" />
                 <span className="font-bold text-lg tracking-tight uppercase">
-                    BEPRODUCTIVE{' '}
-                    <span className="text-text-muted-light dark:text-text-muted-dark text-xs ml-1">
-                        V2.5.0
-                    </span>
+                    DOABLE{' '}
                 </span>
             </div>
 
@@ -50,36 +60,37 @@ export const Header = () => {
 
             {/* Actions */}
             <div className="flex items-center gap-4">
-                {/* System Status */}
-                <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-xs">
-                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-                    <span className="text-text-muted-light dark:text-text-muted-dark">SYS_ONLINE</span>
-                </div>
-
-                {/* Theme Toggle */}
-                <button
-                    onClick={toggleTheme}
-                    className="text-text-muted-light dark:text-text-muted-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors"
-                    title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
-                >
-                    <span className="material-icons">
-                        {theme === 'light' ? 'dark_mode' : 'light_mode'}
-                    </span>
-                </button>
-
                 {/* Settings */}
-                <button className="text-text-muted-light dark:text-text-muted-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors">
-                    <span className="material-icons">settings</span>
-                </button>
-
-                {/* Logout */}
-                <button
-                    onClick={logout}
-                    className="text-text-muted-light dark:text-text-muted-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors"
-                    title="Logout"
-                >
-                    <span className="material-icons">logout</span>
-                </button>
+                <div className="relative" ref={settingsRef}>
+                    <button
+                        onClick={() => setShowSettings((v) => !v)}
+                        className="text-text-muted-light dark:text-text-muted-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors"
+                        title="Settings"
+                    >
+                        <span className="material-icons">settings</span>
+                    </button>
+                    {showSettings && (
+                        <div className="absolute right-0 top-10 z-50 bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark shadow-xl min-w-[180px]">
+                            <button
+                                onClick={() => { toggleTheme(); setShowSettings(false); }}
+                                className="w-full flex items-center gap-3 px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-text-main-light dark:text-text-main-dark hover:bg-background-light dark:hover:bg-background-dark hover:text-primary transition-colors"
+                            >
+                                <span className="material-icons text-base">
+                                    {theme === 'light' ? 'dark_mode' : 'light_mode'}
+                                </span>
+                                {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+                            </button>
+                            <div className="border-t border-border-light dark:border-border-dark" />
+                            <button
+                                onClick={() => { logout(); setShowSettings(false); }}
+                                className="w-full flex items-center gap-3 px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-text-main-light dark:text-text-main-dark hover:bg-background-light dark:hover:bg-background-dark hover:text-red-500 transition-colors"
+                            >
+                                <span className="material-icons text-base">logout</span>
+                                Logout
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
         </header>
     );

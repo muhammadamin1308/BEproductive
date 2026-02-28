@@ -10,11 +10,11 @@ export default {
       colors: {
         primary: "#00E676", // Vibrant neon green
         "primary-dark": "#00C853",
-        "background-light": "#FAFAFA", // Stark off-white
+        "background-light": "#eef2ee", // Stark off-white
         "background-dark": "#121212", 
         "surface-light": "#FFFFFF",
         "surface-dark": "#1E1E1E",
-        "border-light": "#333333", // Softened from pure black to charcoal
+        "border-light": "#E0E0E0", // Softened from pure black to charcoal
         "border-dark": "#333333",
         "text-main-light": "#000000", // Stark black
         "text-muted-light": "#666666",

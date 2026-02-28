@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../lib/axios';
 import { format, startOfWeek, endOfWeek, addDays } from 'date-fns';
 import { useAuthStore } from '../store/useAuthStore';
+import { useToastStore } from '../store/useToastStore';
 
 interface DailyStats {
   [date: string]: { completed: number; total: number };
@@ -31,6 +32,7 @@ interface Reflection {
 
 export const ReviewPage = () => {
   const user = useAuthStore((state) => state.user);
+  const showToast = useToastStore((state) => state.showToast);
   const [stats, setStats] = useState<WeeklyStats | null>(null);
   const [_reflection, setReflection] = useState<Reflection | null>(null);
   const [loading, setLoading] = useState(true);
@@ -97,11 +99,11 @@ export const ReviewPage = () => {
         weekStartDate: weekStartStr,
         ...formData,
       });
-      alert('Reflection saved successfully!');
+      showToast('Reflection saved successfully');
       fetchData();
     } catch (error) {
       console.error('Error saving reflection:', error);
-      alert('Failed to save reflection');
+      showToast('Failed to save reflection');
     }
   };
 
@@ -123,109 +125,86 @@ export const ReviewPage = () => {
   return (
     <div className="p-6 md:p-12 max-w-5xl mx-auto w-full">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl md:text-5xl font-bold uppercase mb-4 tracking-tighter text-text-main-light dark:text-text-main-dark">
-          Weekly Review
-        </h1>
-        <div className="flex items-center justify-between bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark p-3 shadow-sm">
+      <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <h1 className="text-4xl md:text-5xl font-bold uppercase mb-2 tracking-tighter text-text-main-light dark:text-text-main-dark">
+            Weekly Review
+          </h1>
+          <p className="text-text-muted-light dark:text-text-muted-dark text-sm flex items-center">
+            <span className="mr-2 text-primary">{'>'}</span>
+            Reflect, analyze, and improve.
+          </p>
+        </div>
+        <div className="flex items-center border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark">
           <button
             onClick={fetchData}
-            className="hover:text-primary transition-colors text-text-muted-light dark:text-text-muted-dark"
+            className="h-9 px-3 border-r border-border-light dark:border-border-dark text-text-muted-light dark:text-text-muted-dark hover:text-primary transition-colors"
           >
-            <span className="material-icons">refresh</span>
+            <span className="material-icons text-base">refresh</span>
           </button>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setWeekOffset(weekOffset - 1)}
-              className="hover:text-primary transition-colors text-text-main-light dark:text-text-main-dark"
-            >
-              <span className="material-icons">chevron_left</span>
-            </button>
-            <span className="font-bold text-sm md:text-base tracking-widest uppercase text-text-main-light dark:text-text-main-dark">
-              {format(weekStart, 'MMM dd').toUpperCase()} - {format(weekEnd, 'MMM dd, yyyy').toUpperCase()}
-            </span>
-            <button
-              onClick={() => setWeekOffset(weekOffset + 1)}
-              disabled={weekOffset >= 0}
-              className="hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-text-main-light dark:text-text-main-dark"
-            >
-              <span className="material-icons">chevron_right</span>
-            </button>
-          </div>
-          <div className="w-6"></div>
+          <button
+            onClick={() => setWeekOffset(weekOffset - 1)}
+            className="h-9 px-3 border-r border-border-light dark:border-border-dark hover:text-primary transition-colors text-text-main-light dark:text-text-main-dark"
+          >
+            <span className="material-icons text-base">chevron_left</span>
+          </button>
+          <span className="h-9 px-4 font-bold text-[10px] tracking-widest uppercase text-text-main-light dark:text-text-main-dark inline-flex items-center">
+            {format(weekStart, 'MMM dd').toUpperCase()} – {format(weekEnd, 'MMM dd, yyyy').toUpperCase()}
+          </span>
+          <button
+            onClick={() => setWeekOffset(weekOffset + 1)}
+            disabled={weekOffset >= 0}
+            className="h-9 px-3 border-l border-border-light dark:border-border-dark hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-text-main-light dark:text-text-main-dark"
+          >
+            <span className="material-icons text-base">chevron_right</span>
+          </button>
         </div>
-      </div>
+      </header>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark p-6 relative group hover:shadow-tech transition-all">
-          <div className="absolute top-4 right-4 text-text-muted-light dark:text-text-muted-dark opacity-50">
-            <span className="material-icons">check_circle</span>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-border-light dark:border-border-dark mb-12 bg-surface-light dark:bg-surface-dark">
+        <div className="p-6 md:p-8 border-b md:border-b-0 md:border-r border-border-light dark:border-border-dark relative group">
+          <div className="flex justify-between items-start mb-4">
+            <span className="text-[10px] uppercase tracking-[0.2em] text-text-muted-light dark:text-text-muted-dark font-bold">Tasks Done</span>
+            <span className="material-icons text-text-muted-light dark:text-text-muted-dark group-hover:text-primary transition-colors text-lg">check_circle</span>
           </div>
-          <div className="text-xs uppercase text-text-muted-light dark:text-text-muted-dark mb-1 tracking-widest">
-            Tasks Done
+          <div className="text-5xl font-bold text-text-main-light dark:text-text-main-dark">{stats?.completedTasks || 0}</div>
+        </div>
+
+        <div className="p-6 md:p-8 border-b md:border-b-0 md:border-r border-border-light dark:border-border-dark relative group">
+          <div className="flex justify-between items-start mb-4">
+            <span className="text-[10px] uppercase tracking-[0.2em] text-text-muted-light dark:text-text-muted-dark font-bold">Efficiency</span>
+            <span className="material-icons text-text-muted-light dark:text-text-muted-dark group-hover:text-primary transition-colors text-lg">pie_chart</span>
           </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-5xl font-bold text-text-main-light dark:text-text-main-dark">
-              {stats?.completedTasks || 0}
-            </span>
-            <span className="text-sm text-primary font-bold">TARGET MET</span>
+          <div className="text-5xl font-bold text-primary">{stats?.efficiency || 0}%</div>
+        </div>
+
+        <div className="p-6 md:p-8 border-b md:border-b-0 md:border-r border-border-light dark:border-border-dark relative group">
+          <div className="flex justify-between items-start mb-4">
+            <span className="text-[10px] uppercase tracking-[0.2em] text-text-muted-light dark:text-text-muted-dark font-bold">Focus Time</span>
+            <span className="material-icons text-text-muted-light dark:text-text-muted-dark group-hover:text-primary transition-colors text-lg">timelapse</span>
+          </div>
+          <div className="text-5xl font-bold text-text-main-light dark:text-text-main-dark">
+            {stats?.totalFocusHours || 0}<span className="text-2xl">h</span>
           </div>
         </div>
 
-        <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark p-6 relative group hover:shadow-tech transition-all">
-          <div className="absolute top-4 right-4 text-text-muted-light dark:text-text-muted-dark opacity-50">
-            <span className="material-icons">pie_chart</span>
+        <div className="p-6 md:p-8 relative group">
+          <div className="flex justify-between items-start mb-4">
+            <span className="text-[10px] uppercase tracking-[0.2em] text-text-muted-light dark:text-text-muted-dark font-bold">Focused Sessions</span>
+            <span className="material-icons text-text-muted-light dark:text-text-muted-dark group-hover:text-primary transition-colors text-lg">psychology</span>
           </div>
-          <div className="text-xs uppercase text-text-muted-light dark:text-text-muted-dark mb-1 tracking-widest">
-            Efficiency
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-5xl font-bold text-text-main-light dark:text-text-main-dark">
-              {stats?.efficiency || 0}%
-            </span>
-            <span className="text-sm text-primary font-bold">OPTIMAL</span>
-          </div>
-        </div>
-
-        <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark p-6 relative group hover:shadow-tech transition-all">
-          <div className="absolute top-4 right-4 text-text-muted-light dark:text-text-muted-dark opacity-50">
-            <span className="material-icons">timelapse</span>
-          </div>
-          <div className="text-xs uppercase text-text-muted-light dark:text-text-muted-dark mb-1 tracking-widest">
-            Focus Time
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-5xl font-bold text-text-main-light dark:text-text-main-dark">
-              {stats?.totalFocusHours || 0}
-              <span className="text-2xl">h</span>
-            </span>
-            <span className="text-sm text-primary font-bold">OPTIMAL</span>
-          </div>
-        </div>
-
-        <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark p-6 relative group hover:shadow-tech transition-all">
-          <div className="absolute top-4 right-4 text-text-muted-light dark:text-text-muted-dark opacity-50">
-            <span className="material-icons">psychology</span>
-          </div>
-          <div className="text-xs uppercase text-text-muted-light dark:text-text-muted-dark mb-1 tracking-widest">
-            Focused Sessions
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-5xl font-bold text-text-main-light dark:text-text-main-dark">
-              {focusedSessions}
-            </span>
-            <span className="text-sm text-text-muted-light dark:text-text-muted-dark font-mono">
-              /{user?.weeklySessionGoal || 50} GOAL
-            </span>
+          <div className="text-5xl font-bold text-text-main-light dark:text-text-main-dark">
+            {focusedSessions}
+            <span className="text-sm text-text-muted-light dark:text-text-muted-dark font-bold ml-1">/ {user?.weeklySessionGoal || 50}</span>
           </div>
         </div>
       </div>
 
       {/* Daily Activity Chart */}
-      <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark p-6 mb-8 shadow-sm">
-        <h3 className="text-sm font-bold uppercase tracking-wider mb-6 flex items-center gap-2 text-text-main-light dark:text-text-main-dark">
-          <span className="w-2 h-2 bg-primary inline-block"></span>
+      <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark p-6 mb-8">
+        <h3 className="text-sm font-bold uppercase tracking-widest mb-6 flex items-center gap-2 text-text-main-light dark:text-text-main-dark border-b border-border-light dark:border-border-dark pb-2">
+          <span className="material-icons text-base">bar_chart</span>
           Daily Activity
         </h3>
         <div className="flex items-end justify-between h-40 gap-2 md:gap-4">
@@ -278,8 +257,8 @@ export const ReviewPage = () => {
 
       {/* Weekly Reflection */}
       <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark p-6 mb-8">
-        <h2 className="text-xl font-bold uppercase flex items-center gap-2 mb-6 border-b border-border-light dark:border-border-dark pb-2 text-text-main-light dark:text-text-main-dark">
-          <span className="material-icons text-primary text-sm">edit_note</span>
+        <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 mb-6 border-b border-border-light dark:border-border-dark pb-2 text-text-main-light dark:text-text-main-dark">
+          <span className="material-icons text-base">edit_note</span>
           Weekly Reflection
         </h2>
         <form onSubmit={handleSaveReflection} className="space-y-6">
@@ -357,9 +336,9 @@ export const ReviewPage = () => {
       {/* Save Button */}
       <button
         onClick={handleSaveReflection}
-        className="w-full bg-primary hover:bg-primary-dark text-black font-bold uppercase py-4 border border-black/10 shadow-tech transition-all flex items-center justify-center gap-2 group"
+        className="w-full h-11 bg-primary hover:bg-primary-dark text-black font-bold uppercase text-[10px] tracking-widest transition-all hover:shadow-[0_0_12px_rgba(0,224,118,0.3)] flex items-center justify-center gap-2"
       >
-        <span className="material-icons group-hover:rotate-180 transition-transform">save</span>
+        <span className="material-icons text-sm">save</span>
         Save Weekly Log
       </button>
     </div>

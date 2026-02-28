@@ -4,9 +4,11 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { WifiOff } from 'lucide-react';
+import { useToastStore } from '../store/useToastStore';
 
 export const LoginPage = () => {
     const login = useAuthStore((state) => state.login);
+    const showToast = useToastStore((state) => state.showToast);
     const navigate = useNavigate();
     const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
@@ -34,7 +36,7 @@ export const LoginPage = () => {
             }
         } catch (error) {
             console.error('Login failed', error);
-            alert('Login failed. Please try again.');
+            showToast('Login failed. Please try again.');
         }
     };
 

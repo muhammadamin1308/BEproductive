@@ -141,7 +141,7 @@ export const getTask = async (req: AuthRequest, res: Response) => {
 export const createTask = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    const { title, date, pomodorosTotal, startTime, endTime } = req.body;
+    const { title, date, pomodorosTotal, startTime, endTime, description } = req.body;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -156,6 +156,7 @@ export const createTask = async (req: AuthRequest, res: Response) => {
         userId,
         title,
         date,
+        description: description || null,
         startTime,
         endTime,
         status: 'TODO',

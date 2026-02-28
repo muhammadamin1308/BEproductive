@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Modal } from './Modal';
+import { useToastStore } from '../store/useToastStore';
 
 interface TaskCardProps {
     task: {
@@ -28,6 +29,7 @@ export const TaskCard = ({ task, isFirst = false }: TaskCardProps) => {
     const navigate = useNavigate();
     const { setActiveTask, startTimer } = useFocusStore();
     const queryClient = useQueryClient();
+    const showToast = useToastStore((state) => state.showToast);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editTitle, setEditTitle] = useState(task.title);
@@ -73,6 +75,10 @@ export const TaskCard = ({ task, isFirst = false }: TaskCardProps) => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
+            showToast('Task deleted');
+        },
+        onError: () => {
+            showToast('Failed to delete task');
         }
     });
 
@@ -84,6 +90,10 @@ export const TaskCard = ({ task, isFirst = false }: TaskCardProps) => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
             setIsEditing(false);
             setIsMenuOpen(false);
+            showToast('Task updated');
+        },
+        onError: () => {
+            showToast('Failed to update task');
         }
     });
 
@@ -94,6 +104,9 @@ export const TaskCard = ({ task, isFirst = false }: TaskCardProps) => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        },
+        onError: () => {
+            showToast('Failed to update status');
         }
     });
 
@@ -241,9 +254,7 @@ export const TaskCard = ({ task, isFirst = false }: TaskCardProps) => {
                         {/* Task Info */}
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-2">
-                                <span className="text-[10px] font-bold text-text-muted-light dark:text-text-muted-dark">
-                                    {taskId}
-                                </span>
+                                
                                 {isFirst && !isDone && (
                                     <span className="bg-text-main-light dark:bg-white text-white dark:text-black text-[10px] px-1.5 py-0.5 font-bold uppercase">
                                         Current

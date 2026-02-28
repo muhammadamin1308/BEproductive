@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import {
   differenceInCalendarDays,
   endOfWeek,
@@ -10,7 +10,7 @@ import {
 import { DeadlineCard } from '../components/DeadlineCard';
 import { Modal } from '../components/Modal';
 import { useDeadlineStore } from '../store/useDeadlineStore';
-import { Deadline, DeadlineFilter, DeadlineInput, DeadlineViewMode } from '../types/deadline';
+import { Deadline, DeadlineFilter, DeadlineInput } from '../types/deadline';
 
 interface DeadlineFormState {
   title: string;
@@ -19,6 +19,8 @@ interface DeadlineFormState {
   priority: DeadlineInput['priority'];
 }
 
+import { useToastStore } from '../store/useToastStore';
+
 const INITIAL_FORM_STATE: DeadlineFormState = {
   title: '',
   description: '',
@@ -26,11 +28,11 @@ const INITIAL_FORM_STATE: DeadlineFormState = {
   priority: 2,
 };
 
-const FILTER_OPTIONS: Array<{ label: string; value: DeadlineFilter }> = [
-  { label: 'ALL', value: 'all' },
-  { label: 'UPCOMING', value: 'pending' },
-  { label: 'OVERDUE', value: 'overdue' },
-  { label: 'COMPLETED', value: 'completed' },
+const FILTER_OPTIONS: Array<{ label: string; value: DeadlineFilter; icon: string }> = [
+  { label: 'All', value: 'all', icon: 'apps' },
+  { label: 'Upcoming', value: 'pending', icon: 'schedule' },
+  { label: 'Overdue', value: 'overdue', icon: 'warning' },
+  { label: 'Done', value: 'completed', icon: 'check_circle' },
 ];
 
 const formatToInputDate = (dateValue: string): string => format(new Date(dateValue), 'yyyy-MM-dd');
@@ -69,19 +71,31 @@ export const DeadlinesPage = () => {
     setSearchQuery,
   } = useDeadlineStore();
 
-  const [viewMode, setViewMode] = useState<DeadlineViewMode>('list');
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [viewingDeadline, setViewingDeadline] = useState<Deadline | null>(null);
   const [editingDeadline, setEditingDeadline] = useState<Deadline | null>(null);
   const [deleteCandidate, setDeleteCandidate] = useState<Deadline | null>(null);
   const [softDeleteEnabled, setSoftDeleteEnabled] = useState(true);
   const [formState, setFormState] = useState<DeadlineFormState>(INITIAL_FORM_STATE);
-  const [systemMessage, setSystemMessage] = useState<string | null>(null);
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
+  const showToast = useToastStore((state) => state.showToast);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setShowFilterDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     fetchDeadlines().catch(() => {
-      setSystemMessage('SYSTEM_STATUS: DEADLINE_SYNC_FAILED');
+      showToast('Sync failed — check connection');
     });
-  }, [fetchDeadlines]);
+  }, [fetchDeadlines, showToast]);
 
   const filteredDeadlines = useMemo(() => {
     const loweredQuery = searchQuery.trim().toLowerCase();
@@ -149,29 +163,6 @@ export const DeadlinesPage = () => {
     };
   }, [deadlines]);
 
-  const autoSystemStatus = useMemo(() => {
-    const nextPending = [...deadlines]
-      .filter((deadline) => deadline.status === 'PENDING')
-      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0];
-
-    if (!nextPending) {
-      return 'SYSTEM_STATUS: NO_PENDING_DEADLINES';
-    }
-
-    const days = differenceInCalendarDays(
-      startOfDay(new Date(nextPending.dueDate)),
-      startOfDay(new Date()),
-    );
-
-    if (days <= 2) {
-      return 'SYSTEM_STATUS: DEADLINE_APPROACHING';
-    }
-
-    return 'SYSTEM_STATUS: TIMELINE_STABLE';
-  }, [deadlines]);
-
-  const currentSystemStatus = systemMessage ?? autoSystemStatus;
-
   const openCreateModal = () => {
     setEditingDeadline(null);
     setFormState(INITIAL_FORM_STATE);
@@ -199,7 +190,7 @@ export const DeadlinesPage = () => {
     event.preventDefault();
 
     if (!formState.title.trim() || !formState.dueDate) {
-      setSystemMessage('SYSTEM_STATUS: VALIDATION_FAILED');
+      showToast('Title and due date are required');
       return;
     }
 
@@ -213,23 +204,22 @@ export const DeadlinesPage = () => {
     try {
       if (editingDeadline) {
         await updateDeadline(editingDeadline.id, payload);
-        setSystemMessage('SYSTEM_STATUS: DEADLINE_UPDATED');
+        showToast('Deadline updated');
       } else {
         await createDeadline(payload);
-        setSystemMessage('SYSTEM_STATUS: DEADLINE_CREATED');
+        showToast('Deadline created');
       }
       closeFormModal();
     } catch {
-      setSystemMessage('SYSTEM_STATUS: SAVE_OPERATION_FAILED');
+      showToast('Save failed — try again');
     }
   };
 
   const handleToggleComplete = async (id: string) => {
     try {
       await toggleComplete(id);
-      setSystemMessage('SYSTEM_STATUS: DEADLINE_STATE_UPDATED');
     } catch {
-      setSystemMessage('SYSTEM_STATUS: STATE_UPDATE_FAILED');
+      showToast('Status update failed');
     }
   };
 
@@ -240,15 +230,11 @@ export const DeadlinesPage = () => {
 
     try {
       await deleteDeadline(deleteCandidate.id, { softDelete: softDeleteEnabled });
-      setSystemMessage(
-        softDeleteEnabled
-          ? 'SYSTEM_STATUS: DEADLINE_SOFT_DELETED'
-          : 'SYSTEM_STATUS: DEADLINE_HARD_DELETED',
-      );
+      showToast(softDeleteEnabled ? 'Deadline archived' : 'Deadline deleted');
       setDeleteCandidate(null);
       setSoftDeleteEnabled(true);
     } catch {
-      setSystemMessage('SYSTEM_STATUS: DELETE_OPERATION_FAILED');
+      showToast('Delete failed');
     }
   };
 
@@ -258,7 +244,7 @@ export const DeadlinesPage = () => {
       .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
 
     if (upcoming.length === 0) {
-      setSystemMessage('SYSTEM_STATUS: NO_UPCOMING_DEADLINES_TO_EXPORT');
+      showToast('No upcoming deadlines to export');
       return;
     }
 
@@ -288,196 +274,229 @@ export const DeadlinesPage = () => {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    setSystemMessage('SYSTEM_STATUS: EXPORT_COMPLETE');
+    showToast('Export complete');
   };
 
-  const timelineDeadlines = [...filteredDeadlines].sort(
-    (a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime(),
-  );
+
+
+  const filterCounts: Record<DeadlineFilter, number> = useMemo(() => ({
+    all: deadlines.length,
+    pending: deadlines.filter((d) => d.status === 'PENDING').length,
+    overdue: deadlines.filter((d) => d.status === 'OVERDUE').length,
+    completed: deadlines.filter((d) => d.status === 'COMPLETED').length,
+  }), [deadlines]);
 
   return (
-    <main className="p-6 md:p-12 max-w-7xl mx-auto w-full relative">
-      <div className="absolute inset-0 grid-bg-light dark:grid-bg-dark opacity-40 pointer-events-none z-0" />
-
+    <main className="p-6 md:p-10 max-w-7xl mx-auto w-full relative">
       <div className="relative z-10">
-        <header className="mb-8">
-          <div className="flex items-center justify-between gap-4 border-b border-border-light dark:border-border-dark pb-3 mb-5 text-xs font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark">
-            <span>
-              <span className="text-primary">{'>'}</span> ROOT / DEADLINES / OVERVIEW
-            </span>
-            <span className="hidden md:flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              {currentSystemStatus}
-            </span>
-          </div>
+        {/* ─── Header ─── */}
+        <header className="mb-10">
 
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
             <div>
-              <h1 className="text-4xl md:text-5xl font-bold uppercase tracking-tighter text-text-main-light dark:text-text-main-dark">
-                Deadlines Management
-              </h1>
-              <p className="mt-2 text-sm text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">
-                Monitor critical dates and execution milestones
-              </p>
+                <h1 className="text-4xl md:text-5xl font-bold uppercase mb-2 tracking-tighter text-text-main-light dark:text-text-main-dark">
+                    Deadlines
+                </h1>
+                <p className="text-text-muted-light dark:text-text-muted-dark flex items-center gap-2">
+                    <span className="text-primary">{'>'}</span>
+                    Critical dates & execution milestones
+                </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-3">
+              {/* Filter Dropdown */}
+              <div className="relative" ref={filterRef}>
+                <button
+                  onClick={() => setShowFilterDropdown((v) => !v)}
+                  className="h-9 px-4 border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark hover:border-primary transition-all text-[10px] font-bold uppercase tracking-widest inline-flex items-center gap-1.5"
+                >
+                  <span className="material-icons text-sm">filter_list</span>
+                  Filter
+                  {filter !== 'all' && (
+                    <span className="ml-1 bg-primary text-black text-[9px] font-bold px-1 rounded-sm">
+                      {FILTER_OPTIONS.find((o) => o.value === filter)?.label}
+                    </span>
+                  )}
+                </button>
+                {showFilterDropdown && (
+                  <div className="absolute right-0 top-11 z-50 bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark shadow-xl p-4 min-w-[180px]">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark mb-3">Show Status</p>
+                    {FILTER_OPTIONS.map((option) => (
+                      <label key={option.value} className="flex items-center gap-2 cursor-pointer py-1 group">
+                        <input
+                          type="radio"
+                          name="deadline-filter"
+                          checked={filter === option.value}
+                          onChange={() => { setFilter(option.value); setShowFilterDropdown(false); }}
+                          className="accent-primary w-3 h-3"
+                        />
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-text-main-light dark:text-text-main-dark group-hover:text-primary transition-colors flex-1">
+                          {option.label}
+                        </span>
+                        <span className="text-[9px] tabular-nums text-text-muted-light dark:text-text-muted-dark">
+                          {filterCounts[option.value]}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
               <button
                 onClick={handleExportUpcoming}
-                className="h-10 px-4 border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark hover:border-primary hover:text-primary transition-colors text-[10px] font-bold uppercase tracking-widest inline-flex items-center gap-1"
+                className="h-9 px-3 border border-border-light dark:border-border-dark text-text-muted-light dark:text-text-muted-dark hover:border-primary hover:text-primary transition-colors text-[10px] font-bold uppercase tracking-widest inline-flex items-center gap-1.5"
               >
                 <span className="material-icons text-sm">download</span>
-                Export Upcoming
+                Export
               </button>
               <button
                 onClick={openCreateModal}
-                className="h-10 px-4 bg-primary text-black hover:bg-opacity-90 transition-all hover:shadow-[0_0_15px_rgba(0,224,118,0.35)] text-[10px] font-bold uppercase tracking-widest inline-flex items-center gap-1"
+                className="h-9 px-4 bg-primary text-black hover:bg-primary-dark transition-all hover:shadow-[0_0_12px_rgba(0,224,118,0.3)] text-[10px] font-bold uppercase tracking-widest inline-flex items-center gap-1.5"
               >
                 <span className="material-icons text-sm">add</span>
-                Add Deadline
+                New Deadline
               </button>
             </div>
           </div>
         </header>
 
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark p-4 relative">
-            <div className="text-[10px] uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark mb-2">Total Deadlines</div>
-            <div className="text-3xl font-bold text-text-main-light dark:text-text-main-dark">{stats.total}</div>
+        {/* ─── Stats bar — single row, no individual borders ─── */}
+        <section className="grid grid-cols-3 gap-px bg-border-light dark:bg-border-dark mb-8">
+          <div className="bg-surface-light dark:bg-surface-dark px-5 py-4">
+            <div className="text-[10px] uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark mb-1">Total</div>
+            <div className="text-2xl font-bold text-text-main-light dark:text-text-main-dark tabular-nums">{stats.total}</div>
           </div>
-          <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark p-4 relative">
-            <div className="text-[10px] uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark mb-2">Overdue</div>
-            <div className="text-3xl font-bold text-red-600 dark:text-red-300">{stats.overdue}</div>
+          <div className="bg-surface-light dark:bg-surface-dark px-5 py-4">
+            <div className="text-[10px] uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark mb-1">Overdue</div>
+            <div className={`text-2xl font-bold tabular-nums ${stats.overdue > 0 ? 'text-red-500 dark:text-red-400' : 'text-text-muted-light dark:text-text-muted-dark'}`}>{stats.overdue}</div>
           </div>
-          <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark p-4 relative">
-            <div className="text-[10px] uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark mb-2">Completed This Month</div>
-            <div className="text-3xl font-bold text-primary">{stats.completedThisMonth}</div>
-          </div>
-          <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark p-4 relative">
-            <div className="text-[10px] uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark mb-2">Upcoming This Week</div>
-            <div className="text-3xl font-bold text-amber-600 dark:text-amber-300">{stats.upcomingThisWeek}</div>
+          <div className="bg-surface-light dark:bg-surface-dark px-5 py-4">
+            <div className="text-[10px] uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark mb-1">Completed / Month</div>
+            <div className="text-2xl font-bold text-primary tabular-nums">{stats.completedThisMonth}</div>
           </div>
         </section>
 
-        <section className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark p-4 mb-8">
-          <div className="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
-            <div className="flex-1 min-w-0">
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark mb-2">
-                Search Deadlines
-              </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-3 flex items-center text-primary">{'>'}</span>
-                <input
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Search by title or note..."
-                  className="w-full h-10 pl-8 pr-3 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark placeholder:text-text-muted-light dark:placeholder:text-text-muted-dark focus:outline-none focus:border-primary"
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {FILTER_OPTIONS.map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => setFilter(option.value)}
-                  className={`h-10 px-3 border text-[10px] font-bold uppercase tracking-widest transition-colors ${
-                    filter === option.value
-                      ? 'border-primary text-primary bg-primary/10'
-                      : 'border-border-light dark:border-border-dark text-text-muted-light dark:text-text-muted-dark hover:border-primary hover:text-primary'
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setViewMode('list')}
-                className={`h-10 px-3 border text-[10px] font-bold uppercase tracking-widest transition-colors inline-flex items-center gap-1 ${
-                  viewMode === 'list'
-                    ? 'border-primary text-primary bg-primary/10'
-                    : 'border-border-light dark:border-border-dark text-text-muted-light dark:text-text-muted-dark hover:border-primary hover:text-primary'
-                }`}
-              >
-                <span className="material-icons text-sm">view_list</span>
-                List
-              </button>
-              <button
-                onClick={() => setViewMode('timeline')}
-                className={`h-10 px-3 border text-[10px] font-bold uppercase tracking-widest transition-colors inline-flex items-center gap-1 ${
-                  viewMode === 'timeline'
-                    ? 'border-primary text-primary bg-primary/10'
-                    : 'border-border-light dark:border-border-dark text-text-muted-light dark:text-text-muted-dark hover:border-primary hover:text-primary'
-                }`}
-              >
-                <span className="material-icons text-sm">timeline</span>
-                Timeline
-              </button>
-            </div>
+        {/* ─── Toolbar: Search ─── */}
+        <section className="mb-8">
+          <div className="flex-1 min-w-0 relative">
+            <span className="absolute inset-y-0 left-3 flex items-center text-primary text-xs">{'>'}</span>
+            <input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search deadlines..."
+              className="w-full h-9 pl-7 pr-3 bg-surface-light dark:bg-surface-dark border-b border-border-light dark:border-border-dark text-sm text-text-main-light dark:text-text-main-dark placeholder:text-text-muted-light/50 dark:placeholder:text-text-muted-dark/50 focus:outline-none focus:border-primary transition-colors"
+            />
           </div>
         </section>
 
+        {/* ─── Error ─── */}
         {error && (
-          <div className="mb-6 border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 px-4 py-3 text-xs font-bold uppercase tracking-widest">
-            SYSTEM_STATUS: {error}
+          <div className="mb-6 border-l-2 border-red-500 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 px-4 py-3 text-xs font-bold uppercase tracking-widest">
+            {error}
           </div>
         )}
 
+        {/* ─── Content ─── */}
         {loading && deadlines.length === 0 ? (
-          <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark p-8 text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest text-xs">
-            <span className="text-primary">{'>'}</span> LOADING_DEADLINE_DATA...
+          <div className="py-16 text-center text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest text-xs">
+            <span className="text-primary">{'>'}</span> Loading deadlines...
           </div>
         ) : filteredDeadlines.length === 0 ? (
-          <div className="bg-surface-light dark:bg-surface-dark border border-dashed border-border-light dark:border-border-dark p-10 text-center">
-            <p className="text-text-muted-light dark:text-text-muted-dark text-sm uppercase tracking-widest">
-              No deadlines found for current filters
+          <div className="py-16 text-center">
+            <span className="material-icons text-3xl text-text-muted-light/30 dark:text-text-muted-dark/30 mb-3 block">event_busy</span>
+            <p className="text-text-muted-light dark:text-text-muted-dark text-xs uppercase tracking-widest">
+              No deadlines match current filters
             </p>
           </div>
-        ) : viewMode === 'list' ? (
-          <section className="space-y-4">
+        ) : (
+          <section className="space-y-3">
             {filteredDeadlines.map((deadline) => (
               <DeadlineCard
                 key={deadline.id}
                 deadline={deadline}
+                onView={setViewingDeadline}
                 onEdit={openEditModal}
                 onToggleComplete={handleToggleComplete}
                 onDelete={setDeleteCandidate}
               />
             ))}
           </section>
-        ) : (
-          <section className="relative pl-10">
-            <div className="absolute left-3 top-0 bottom-0 w-px bg-border-light dark:bg-border-dark" />
-            <div className="space-y-6">
-              {timelineDeadlines.map((deadline) => (
-                <div key={deadline.id} className="relative">
-                  <div className="absolute -left-10 top-8 w-4 h-4 border-2 border-primary bg-background-light dark:bg-background-dark" />
-                  <div className="mb-2 text-[10px] font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark">
-                    {format(new Date(deadline.dueDate), 'dd.MM.yyyy')} | {getRelativeDayLabel(deadline.dueDate)}
-                  </div>
-                  <DeadlineCard
-                    deadline={deadline}
-                    onEdit={openEditModal}
-                    onToggleComplete={handleToggleComplete}
-                    onDelete={setDeleteCandidate}
-                  />
-                </div>
-              ))}
-            </div>
-          </section>
         )}
       </div>
 
+      {/* ─── View Deadline Modal ─── */}
+      <Modal
+        isOpen={Boolean(viewingDeadline)}
+        onClose={() => setViewingDeadline(null)}
+        title="Deadline Details"
+      >
+        {viewingDeadline && (
+          <div className="space-y-4">
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark mb-1">Title</div>
+              <p className="text-sm font-bold text-text-main-light dark:text-text-main-dark break-words">{viewingDeadline.title}</p>
+            </div>
+
+            {viewingDeadline.description?.trim() && (
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark mb-1">Notes</div>
+                <p className="text-sm text-text-main-light dark:text-text-main-dark break-words whitespace-pre-wrap">{viewingDeadline.description}</p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark mb-1">Due Date</div>
+                <p className="text-sm text-text-main-light dark:text-text-main-dark">{format(new Date(viewingDeadline.dueDate), 'dd.MM.yyyy')}</p>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark mb-1">Priority</div>
+                <p className="text-sm text-text-main-light dark:text-text-main-dark">
+                  {viewingDeadline.priority === 1 ? 'P1 — High' : viewingDeadline.priority === 2 ? 'P2 — Medium' : 'P3 — Low'}
+                </p>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark mb-1">Status</div>
+                <p className="text-sm text-text-main-light dark:text-text-main-dark">{viewingDeadline.status}</p>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark mb-1">Created</div>
+                <p className="text-sm text-text-main-light dark:text-text-main-dark">{format(new Date(viewingDeadline.createdAt), 'dd.MM.yyyy')}</p>
+              </div>
+            </div>
+
+            <div className="pt-3 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  openEditModal(viewingDeadline);
+                  setViewingDeadline(null);
+                }}
+                className="h-9 px-4 border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark hover:border-primary hover:text-primary transition-colors text-[10px] font-bold uppercase tracking-widest inline-flex items-center gap-1.5"
+              >
+                <span className="material-icons text-sm">edit</span>
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewingDeadline(null)}
+                className="h-9 px-4 bg-primary text-black hover:bg-primary-dark transition-all text-[10px] font-bold uppercase tracking-widest"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* ─── Create / Edit Modal ─── */}
       <Modal
         isOpen={isFormModalOpen}
         onClose={closeFormModal}
-        title={editingDeadline ? 'Edit Deadline' : 'Create Deadline'}
+        title={editingDeadline ? 'Edit Deadline' : 'New Deadline'}
       >
-        <form onSubmit={handleSaveDeadline} className="space-y-4">
+        <form onSubmit={handleSaveDeadline} className="space-y-5">
           <div>
-            <label className="block text-[10px] font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark mb-2">
+            <label className="block text-[10px] font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark mb-1.5">
               Title
             </label>
             <input
@@ -490,13 +509,14 @@ export const DeadlinesPage = () => {
                 }))
               }
               required
-              className="w-full h-10 px-3 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark focus:outline-none focus:border-primary"
+              placeholder="e.g. Submit final report"
+              className="w-full h-10 px-3 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark placeholder:text-text-muted-light/40 dark:placeholder:text-text-muted-dark/40 focus:outline-none focus:border-primary"
             />
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark mb-2">
-              Description / Notes
+            <label className="block text-[10px] font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark mb-1.5">
+              Notes <span className="text-text-muted-light/50 dark:text-text-muted-dark/50">(optional)</span>
             </label>
             <textarea
               value={formState.description}
@@ -506,14 +526,14 @@ export const DeadlinesPage = () => {
                   description: event.target.value,
                 }))
               }
-              rows={4}
+              rows={3}
               className="w-full px-3 py-2 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark focus:outline-none focus:border-primary resize-none"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark mb-2">
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark mb-1.5">
                 Due Date
               </label>
               <input
@@ -530,7 +550,7 @@ export const DeadlinesPage = () => {
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark mb-2">
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark mb-1.5">
                 Priority
               </label>
               <select
@@ -543,25 +563,25 @@ export const DeadlinesPage = () => {
                 }
                 className="w-full h-10 px-3 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark focus:outline-none focus:border-primary"
               >
-                <option value="1">P1 - HIGH</option>
-                <option value="2">P2 - MEDIUM</option>
-                <option value="3">P3 - LOW</option>
+                <option value="1">P1 — High</option>
+                <option value="2">P2 — Medium</option>
+                <option value="3">P3 — Low</option>
               </select>
             </div>
           </div>
 
-          <div className="pt-2 flex justify-end gap-2">
+          <div className="pt-3 flex justify-end gap-2">
             <button
               type="button"
               onClick={closeFormModal}
-              className="h-10 px-4 border border-border-light dark:border-border-dark text-text-muted-light dark:text-text-muted-dark hover:border-primary hover:text-primary transition-colors text-[10px] font-bold uppercase tracking-widest"
+              className="h-9 px-4 text-text-muted-light dark:text-text-muted-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors text-[10px] font-bold uppercase tracking-widest"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="h-10 px-4 bg-primary text-black hover:bg-opacity-90 transition-all text-[10px] font-bold uppercase tracking-widest disabled:opacity-60"
+              className="h-9 px-5 bg-primary text-black hover:bg-primary-dark transition-all text-[10px] font-bold uppercase tracking-widest disabled:opacity-50"
             >
               {editingDeadline ? 'Update' : 'Create'}
             </button>
@@ -569,39 +589,32 @@ export const DeadlinesPage = () => {
         </form>
       </Modal>
 
+      {/* ─── Delete Confirmation Modal ─── */}
       <Modal
         isOpen={Boolean(deleteCandidate)}
         onClose={() => {
           setDeleteCandidate(null);
           setSoftDeleteEnabled(true);
         }}
-        title="Delete Deadline"
+        title="Confirm Delete"
       >
-        <div className="space-y-4">
-          <div className="border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark p-3">
-            <p className="text-xs font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark">
-              {'>'} CONFIRM_DELETE_SEQUENCE
-            </p>
-            <p className="mt-2 text-sm text-text-main-light dark:text-text-main-dark break-words">
+        <div className="space-y-5">
+          <div className="border-l-2 border-red-500 pl-3 py-1">
+            <p className="text-sm font-bold text-text-main-light dark:text-text-main-dark break-words">
               {deleteCandidate?.title}
             </p>
           </div>
 
-          <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark cursor-pointer">
+          <label className="flex items-center gap-2.5 text-xs text-text-muted-light dark:text-text-muted-dark cursor-pointer select-none">
             <input
               type="checkbox"
               checked={softDeleteEnabled}
               onChange={(event) => setSoftDeleteEnabled(event.target.checked)}
               className="h-4 w-4 border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark text-primary focus:ring-primary"
             />
-            Soft Delete (Recoverable)
+            <span className="uppercase tracking-widest font-bold">Soft delete</span>
+            <span className="text-text-muted-light/50 dark:text-text-muted-dark/50">— recoverable</span>
           </label>
-
-          <p className="text-xs text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">
-            {softDeleteEnabled
-              ? 'SYSTEM_STATUS: RECORD_MARKED_AS_ARCHIVED'
-              : 'SYSTEM_STATUS: RECORD_PERMANENTLY_REMOVED'}
-          </p>
 
           <div className="pt-2 flex justify-end gap-2">
             <button
@@ -610,7 +623,7 @@ export const DeadlinesPage = () => {
                 setDeleteCandidate(null);
                 setSoftDeleteEnabled(true);
               }}
-              className="h-10 px-4 border border-border-light dark:border-border-dark text-text-muted-light dark:text-text-muted-dark hover:border-primary hover:text-primary transition-colors text-[10px] font-bold uppercase tracking-widest"
+              className="h-9 px-4 text-text-muted-light dark:text-text-muted-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors text-[10px] font-bold uppercase tracking-widest"
             >
               Cancel
             </button>
@@ -618,9 +631,9 @@ export const DeadlinesPage = () => {
               type="button"
               onClick={handleConfirmDelete}
               disabled={loading}
-              className="h-10 px-4 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 hover:border-red-500 hover:text-red-500 transition-colors text-[10px] font-bold uppercase tracking-widest disabled:opacity-60"
+              className="h-9 px-4 bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-500/20 transition-colors text-[10px] font-bold uppercase tracking-widest disabled:opacity-50"
             >
-              Confirm Delete
+              {softDeleteEnabled ? 'Archive' : 'Delete Permanently'}
             </button>
           </div>
         </div>

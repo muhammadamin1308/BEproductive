@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { CountdownCircleTimer } from 'react-countdown-circle-timer';
 
+
 export const FocusPage = () => {
     const {
         timeLeft,
@@ -18,6 +19,17 @@ export const FocusPage = () => {
     } = useFocusStore();
     const { theme } = useThemeStore();
     const navigate = useNavigate();
+
+    // Motivational quotes, rotate by hour
+    const motivationalQuotes = [
+        'Stay focused, you got this!',
+        'Discipline beats motivation.',
+        'Progress, not perfection.',
+        'Every minute counts. Make it matter.',
+        'Small steps, big results.',
+    ];
+    const quoteIndex = new Date().getHours() % motivationalQuotes.length;
+    const currentQuote = motivationalQuotes[quoteIndex];
 
     // Check if task is complete and redirect
     useEffect(() => {
@@ -86,20 +98,7 @@ export const FocusPage = () => {
 
     return (
         <main className="flex-grow flex flex-col relative min-h-[calc(100vh-120px)]">
-            {/* Grid Background */}
-            <div className="absolute inset-0 grid-bg-light dark:grid-bg-dark opacity-40 pointer-events-none z-0"></div>
-
             <div className="relative z-10 flex flex-col items-center justify-center flex-grow w-full max-w-4xl mx-auto px-4 py-8">
-                {/* Breadcrumb */}
-                <div className="w-full flex justify-between items-center mb-8 font-mono text-xs text-text-muted-light dark:text-text-muted-dark border-b border-border-light dark:border-border-dark pb-2">
-                    <div>
-                        <span className="text-primary">{'>'}</span> ROOT / FOCUS_MODE / ACTIVE_SESSION
-                    </div>
-                    <div className="hidden sm:block">
-                        MEM: 23% | CPU: 12% | LATENCY: 14ms
-                    </div>
-                </div>
-
                 {/* Timer Card */}
                 <div className="w-full max-w-lg bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark shadow-lg dark:shadow-none p-8 md:p-12 relative overflow-hidden group">
                     {/* Corner Accents */}
@@ -146,8 +145,7 @@ export const FocusPage = () => {
                         </h2>
                         <div className="flex items-center justify-center gap-2 font-mono text-sm text-text-muted-light dark:text-text-muted-dark">
                             <span className="text-primary">{'>'}</span>
-                            <span>SYSTEM_STATUS: STAY_FOCUSED_YOU_GOT_THIS</span>
-                            <span className="w-2 h-4 bg-primary animate-pulse inline-block align-middle ml-1"></span>
+                            <span>{currentQuote}</span>
                         </div>
                     </div>
 
@@ -189,7 +187,7 @@ export const FocusPage = () => {
                 </div>
 
                 {/* Stats Cards */}
-                <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-lg">
+                <div className="mt-8 grid grid-cols-3 md:grid-cols-3 gap-4 w-full max-w-lg">
                     <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark p-3">
                         <div className="text-[10px] font-mono text-text-muted-light dark:text-text-muted-dark uppercase mb-1">
                             Session
@@ -212,19 +210,6 @@ export const FocusPage = () => {
                         </div>
                         <div className="text-lg font-bold text-text-main-light dark:text-text-main-dark">
                             {estFinishStr}
-                        </div>
-                    </div>
-                    <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark p-3 flex flex-col justify-between group cursor-pointer hover:border-primary transition-colors">
-                        <div className="text-[10px] font-mono text-text-muted-light dark:text-text-muted-dark uppercase mb-1">
-                            Mode
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <div className="text-lg font-bold text-text-main-light dark:text-text-main-dark">
-                                STRICT
-                            </div>
-                            <span className="material-icons text-sm text-text-muted-light dark:text-text-muted-dark group-hover:text-primary">
-                                tune
-                            </span>
                         </div>
                     </div>
                 </div>
