@@ -22,6 +22,7 @@ app.use(
       "http://localhost:5173",
       "http://localhost:4173",
       "https://beproductive.muhammadamin.tech",
+      "https://doable.muhammadamin.tech"
       process.env.FRONTEND_URL
     ].filter(Boolean) as string[],
     credentials: true,
