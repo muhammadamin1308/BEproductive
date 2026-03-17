@@ -67,7 +67,7 @@ heroku ps --app beproductive-backend
 | `DATABASE_URL`   | Heroku Postgres connection string  |
 | `JWT_SECRET`     | Secret for signing JWT tokens      |
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID           |
-| `FRONTEND_URL`   | Allowed CORS origin (e.g. `https://beproductive.muhammadamin.tech`) |
+| `FRONTEND_URL`   | Optional extra CORS origin (e.g. a staging URL). The production origins `https://doable.muhammadamin.tech` and `https://beproductive.muhammadamin.tech` are already allowed in code. |
 
 To set or update a variable:
 

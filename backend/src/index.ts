@@ -16,18 +16,19 @@ const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
 
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:4173",
-      "https://beproductive.muhammadamin.tech",
-      "https://doable.muhammadamin.tech",
-      process.env.FRONTEND_URL
-    ].filter(Boolean) as string[],
-    credentials: true,
-  }),
-);
+const corsOptions: cors.CorsOptions = {
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:4173",
+    "https://beproductive.muhammadamin.tech",
+    "https://doable.muhammadamin.tech",
+    process.env.FRONTEND_URL,
+  ].filter(Boolean) as string[],
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
